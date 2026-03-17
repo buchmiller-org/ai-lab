@@ -2,8 +2,6 @@
    AI Games Arcade — Design System
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap');
-
 /* --- Tokens --- */
 :root {
   --color-bg: #0a0e1a;
@@ -469,6 +467,14 @@ body {
 
 .game-card--purple-cyan:hover .game-card__cta {
   color: var(--color-accent-cyan);
+}
+
+.game-card--orange-pink:hover .game-card__cta {
+  color: var(--color-accent-orange);
+}
+
+.game-card--green-yellow:hover .game-card__cta {
+  color: var(--color-accent-yellow);
 }
 
 .game-card__cta-arrow {
