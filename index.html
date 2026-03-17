@@ -54,10 +54,22 @@
         <!-- Neon Snake -->
         <a href="games/neon-snake/index.html" class="game-card game-card--orange-pink" id="card-neon-snake">
           <div class="game-card__thumb game-card__thumb--snake">
-            <div class="thumb-shape thumb-shape--snake-body"></div>
-            <div class="thumb-shape thumb-shape--snake-segment thumb-shape--seg-1"></div>
-            <div class="thumb-shape thumb-shape--snake-segment thumb-shape--seg-2"></div>
-            <div class="thumb-shape thumb-shape--food"></div>
+            <!-- Grid dots (background texture) -->
+            <div class="thumb-shape thumb-shape--grid-dot" style="top:20%;left:25%"></div>
+            <div class="thumb-shape thumb-shape--grid-dot" style="top:20%;left:50%"></div>
+            <div class="thumb-shape thumb-shape--grid-dot" style="top:20%;left:75%"></div>
+            <div class="thumb-shape thumb-shape--grid-dot" style="top:80%;left:25%"></div>
+            <div class="thumb-shape thumb-shape--grid-dot" style="top:80%;left:75%"></div>
+            <!-- Snake + food in a fixed-size centered wrapper -->
+            <div class="snake-preview">
+              <div class="thumb-shape thumb-shape--sn-seg thumb-shape--sn-5"></div>
+              <div class="thumb-shape thumb-shape--sn-seg thumb-shape--sn-4"></div>
+              <div class="thumb-shape thumb-shape--sn-seg thumb-shape--sn-3"></div>
+              <div class="thumb-shape thumb-shape--sn-seg thumb-shape--sn-2"></div>
+              <div class="thumb-shape thumb-shape--sn-seg thumb-shape--sn-1"></div>
+              <div class="thumb-shape thumb-shape--sn-head"></div>
+              <div class="thumb-shape thumb-shape--food"></div>
+            </div>
           </div>
           <div class="game-card__body">
             <h2 class="game-card__title">Neon Snake</h2>
