@@ -563,6 +563,83 @@ body {
   transform: translateX(4px);
 }
 
+/* --- Upcoming Games Section --- */
+.upcoming-games {
+  max-width: 800px;
+  width: 100%;
+  padding: 0 0 80px;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 32px;
+  color: var(--color-text);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.upcoming-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.upcoming-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-btn);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.upcoming-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateX(4px);
+}
+
+.upcoming-item__bullet {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  margin-top: 8.5px;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(193, 203, 216, 0.4);
+}
+
+.upcoming-item:nth-child(1) .upcoming-item__bullet { background: var(--color-accent-purple); box-shadow: 0 0 10px rgba(168, 85, 247, 0.6); }
+.upcoming-item:nth-child(2) .upcoming-item__bullet { background: var(--color-accent-cyan); box-shadow: 0 0 10px rgba(6, 214, 160, 0.6); }
+.upcoming-item:nth-child(3) .upcoming-item__bullet { background: var(--color-accent-orange); box-shadow: 0 0 10px rgba(251, 146, 60, 0.6); }
+.upcoming-item:nth-child(4) .upcoming-item__bullet { background: var(--color-accent-pink); box-shadow: 0 0 10px rgba(244, 114, 182, 0.6); }
+
+.upcoming-item__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.upcoming-item__title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.03em;
+}
+
+.upcoming-item__desc {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
 /* --- Footer --- */
 .site-footer {
   text-align: center;
