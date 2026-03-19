@@ -69,40 +69,59 @@ class Maze {
   }
 
   generate() {
-    let current = this.grid[0][0];
-    current.visited = true;
-    let stack = [current];
+    // Randomized Kruskal's Algorithm for longer, unbiased forks
+    let totalCells = this.size * this.size;
+    let parent = new Array(totalCells);
+    for (let i = 0; i < totalCells; i++) parent[i] = i;
+    
+    const find = (i) => {
+      if (parent[i] === i) return i;
+      return parent[i] = find(parent[i]);
+    };
+    
+    const union = (i, j) => {
+      let rootI = find(i);
+      let rootJ = find(j);
+      if (rootI !== rootJ) {
+        parent[rootI] = rootJ;
+        return true;
+      }
+      return false;
+    };
 
-    while (stack.length > 0) {
-      let r = current.r;
-      let c = current.c;
-      let neighbors = [];
+    let edges = [];
+    for (let r = 0; r < this.size; r++) {
+      for (let c = 0; c < this.size; c++) {
+        if (c < this.size - 1) {
+          edges.push({ r1: r, c1: c, r2: r, c2: c + 1, dir: 'right' });
+        }
+        if (r < this.size - 1) {
+          edges.push({ r1: r, c1: c, r2: r + 1, c2: c, dir: 'bottom' });
+        }
+      }
+    }
+
+    // Fisher-Yates shuffle edges
+    for (let i = edges.length - 1; i > 0; i--) {
+      let j = Math.floor(Math.random() * (i + 1));
+      [edges[i], edges[j]] = [edges[j], edges[i]];
+    }
+
+    for (let edge of edges) {
+      let cell1Id = edge.r1 * this.size + edge.c1;
+      let cell2Id = edge.r2 * this.size + edge.c2;
       
-      // Top
-      if (r > 0 && !this.grid[r-1][c].visited) neighbors.push({cell: this.grid[r-1][c], dir: 'top'});
-      // Right
-      if (c < this.size-1 && !this.grid[r][c+1].visited) neighbors.push({cell: this.grid[r][c+1], dir: 'right'});
-      // Bottom
-      if (r < this.size-1 && !this.grid[r+1][c].visited) neighbors.push({cell: this.grid[r+1][c], dir: 'bottom'});
-      // Left
-      if (c > 0 && !this.grid[r][c-1].visited) neighbors.push({cell: this.grid[r][c-1], dir: 'left'});
-
-      if (neighbors.length > 0) {
-        // Randomly pick a valid neighbor
-        let next = neighbors[Math.floor(Math.random() * neighbors.length)];
+      if (union(cell1Id, cell2Id)) {
+        let current = this.grid[edge.r1][edge.c1];
+        let next = this.grid[edge.r2][edge.c2];
         
-        // Remove the wall between current and chosen neighbor
-        if (next.dir === 'top') { current.walls.top = false; next.cell.walls.bottom = false; }
-        if (next.dir === 'right') { current.walls.right = false; next.cell.walls.left = false; }
-        if (next.dir === 'bottom') { current.walls.bottom = false; next.cell.walls.top = false; }
-        if (next.dir === 'left') { current.walls.left = false; next.cell.walls.right = false; }
-
-        next.cell.visited = true;
-        stack.push(current);
-        current = next.cell;
-      } else {
-        // Backtrack
-        current = stack.pop();
+        if (edge.dir === 'right') {
+          current.walls.right = false;
+          next.walls.left = false;
+        } else if (edge.dir === 'bottom') {
+          current.walls.bottom = false;
+          next.walls.top = false;
+        }
       }
     }
   }
