@@ -5,20 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Pixel Maze — navigate procedurally generated mazes.">
   <title>Pixel Maze — AI Games Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap">
   <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>">
 </head>
 <body>
 
+  <!-- Animated background from arcade -->
   <div class="bg-grid" aria-hidden="true"></div>
   <div class="orb orb--1" aria-hidden="true"></div>
   <div class="orb orb--2" aria-hidden="true"></div>
 
-  <div class="placeholder-page">
-    <h1 class="placeholder-page__title placeholder-page__title--maze">Pixel Maze</h1>
-    <p class="placeholder-page__status">Coming Soon</p>
-    <a href="../../index.html" class="placeholder-page__back" id="back-link">← Back to Arcade</a>
+  <div class="page-wrapper">
+    <!-- Header -->
+    <header class="game-header">
+      <h1 class="game-title game-title--maze">Pixel Maze</h1>
+      <a href="../../index.html" class="back-link">← Back to Arcade</a>
+    </header>
+
+    <!-- Game Container -->
+    <main class="game-container">
+      <canvas id="game-canvas" width="600" height="600"></canvas>
+      
+      <!-- Overlays -->
+      <div id="ui-layer" class="ui-layer">
+        
+        <!-- Start Screen -->
+        <div id="screen-start" class="screen screen--active">
+          <h2 class="screen__title">Ready?</h2>
+          <p id="start-level-text" class="screen__text">Highest Level: 1</p>
+          <div class="screen__actions">
+            <button id="btn-start" class="btn btn--primary">Start Game</button>
+            <button id="btn-reset" class="btn btn--ghost">Reset Progress</button>
+          </div>
+        </div>
+
+        <!-- Level Complete Screen -->
+        <div id="screen-complete" class="screen">
+          <h2 class="screen__title">Level Complete!</h2>
+          <p id="complete-level-text" class="screen__text">Maze Escaped</p>
+          <div class="screen__actions">
+            <button id="btn-next" class="btn btn--primary">Next Level</button>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
   </div>
 
+  <script src="game.js"></script>
 </body>
 </html>
