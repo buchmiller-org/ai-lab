@@ -358,10 +358,15 @@ function levelComplete() {
   // Re-draw once without requestAnimationFrame so it stays static
   draw(); 
 
+  const completedLevel = currentLevel;
   currentLevel++;
   saveHighestLevel(currentLevel);
 
-  completeLevelText.textContent = `You reached Level ${currentLevel}`;
+  const titleEl = document.querySelector('#screen-complete .screen__title');
+  if (titleEl) {
+    titleEl.textContent = `Level ${completedLevel} Complete!`;
+  }
+  completeLevelText.textContent = `Ready for Level ${currentLevel}?`;
   showScreen(screenComplete);
 }
 
