@@ -21,12 +21,12 @@ These are popular, CDN-friendly libraries well-suited for this project:
 ## Project Structure
 
 ```
-ai-games/
+ai-lab/
 ├── index.html          # Landing page with game cards
 ├── styles.css          # Shared site styles
 ├── AGENTS.md           # These instructions
 ├── README.md           # Human-facing readme
-├── games/
+├── arcade/
 │   └── <game-name>/    # Each game in its own folder
 │       └── index.html  # Game entry point (self-contained)
 ```
@@ -65,7 +65,7 @@ The CTA text on hover defaults to white. Only `game-card--purple-cyan` overrides
 
 ## Game Page Conventions
 
-Each game page (`games/<game-name>/index.html`) should:
+Each game page (`arcade/<game-name>/index.html`) should:
 
 - Be fully self-contained (all game code in this file or sibling files within the folder)
 - Include the preconnect + Google Fonts `<link>` tags (see Font Loading above)
@@ -79,7 +79,7 @@ Each game page (`games/<game-name>/index.html`) should:
 When adding a game, a card must be added to `index.html` inside the `<section class="games-grid">` element. Each card follows this pattern:
 
 ```html
-<a href="games/<game-name>/" class="game-card game-card--<color-theme>" id="card-<game-name>">
+<a href="arcade/<game-name>/" class="game-card game-card--<color-theme>" id="card-<game-name>">
   <div class="game-card__thumb game-card__thumb--<game>">
     <!-- Abstract thumbnail shapes -->
   </div>
@@ -95,7 +95,7 @@ Existing color themes: `game-card--purple-cyan`, `game-card--orange-pink`, `game
 
 ## Local Development
 
-To serve the site locally, use `cmd /c "npx -y serve .. -l 3000"` from inside the project directory, so the site is served with `ai-games` as the base path (e.g. `http://localhost:3000/ai-games/`). The `cmd /c` wrapper is needed on this system due to PowerShell execution policy.
+To serve the site locally, use `cmd /c "npx -y serve -l 3000"` from inside the project directory (will be available at `http://localhost:3000/`). The `cmd /c` wrapper is needed if using PowerShell.
 
 ## Workflows
 

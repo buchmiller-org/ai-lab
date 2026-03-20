@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AI Games Arcade — a collection of AI-generated browser games. No downloads, no servers, just play.">
+  <title>AI Games Arcade — AI Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>">
+</head>
+<body>
+
+  <!-- Animated background -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="orb orb--1" aria-hidden="true"></div>
+  <div class="orb orb--2" aria-hidden="true"></div>
+  <div class="orb orb--3" aria-hidden="true"></div>
+
+  <div class="page-wrapper">
+
+    <!-- Header -->
+    <header class="site-header" id="site-header">
+      <div class="header-icon">
+        <div class="joystick" aria-hidden="true">
+          <div class="joystick__knob"></div>
+          <div class="joystick__stick"></div>
+          <div class="joystick__base"></div>
+        </div>
+      </div>
+      <h1 class="site-title">AI Games Arcade</h1>
+      <p class="site-subtitle">AI-generated browser games — no downloads, just play</p>
+    </header>
+
+    <!-- Games Grid -->
+    <main>
+      <section class="games-grid" id="games-grid" aria-label="Games">
+
+        <!-- Gravity Drop -->
+        <a href="gravity-drop/" class="game-card game-card--purple-cyan" id="card-gravity-drop">
+          <div class="game-card__thumb game-card__thumb--gravity">
+            <div class="gravity-preview">
+              <div class="thumb-shape thumb-shape--gd-bar thumb-shape--gd-bar-1L"></div>
+              <div class="thumb-shape thumb-shape--gd-bar thumb-shape--gd-bar-1R"></div>
+              <div class="thumb-shape thumb-shape--gd-bar thumb-shape--gd-bar-2L"></div>
+              <div class="thumb-shape thumb-shape--gd-bar thumb-shape--gd-bar-2R"></div>
+              <div class="thumb-shape thumb-shape--gd-bar thumb-shape--gd-bar-3L"></div>
+              <div class="thumb-shape thumb-shape--gd-bar thumb-shape--gd-bar-3R"></div>
+              <div class="thumb-shape thumb-shape--gd-orb"></div>
+            </div>
+          </div>
+          <div class="game-card__body">
+            <h2 class="game-card__title">Gravity Drop</h2>
+            <p class="game-card__desc">Guide a falling orb through shifting gravity fields. Quick reflexes required.</p>
+            <span class="game-card__cta">Play <span class="game-card__cta-arrow">→</span></span>
+          </div>
+        </a>
+
+        <!-- Neon Snake -->
+        <a href="neon-snake/" class="game-card game-card--orange-pink" id="card-neon-snake">
+          <div class="game-card__thumb game-card__thumb--snake">
+            <!-- Grid dots (background texture) -->
+            <div class="thumb-shape thumb-shape--grid-dot" style="top:20%;left:25%"></div>
+            <div class="thumb-shape thumb-shape--grid-dot" style="top:20%;left:50%"></div>
+            <div class="thumb-shape thumb-shape--grid-dot" style="top:20%;left:75%"></div>
+            <div class="thumb-shape thumb-shape--grid-dot" style="top:80%;left:25%"></div>
+            <div class="thumb-shape thumb-shape--grid-dot" style="top:80%;left:75%"></div>
+            <!-- Snake + food in a fixed-size centered wrapper -->
+            <div class="snake-preview">
+              <div class="thumb-shape thumb-shape--sn-seg thumb-shape--sn-5"></div>
+              <div class="thumb-shape thumb-shape--sn-seg thumb-shape--sn-4"></div>
+              <div class="thumb-shape thumb-shape--sn-seg thumb-shape--sn-3"></div>
+              <div class="thumb-shape thumb-shape--sn-seg thumb-shape--sn-2"></div>
+              <div class="thumb-shape thumb-shape--sn-seg thumb-shape--sn-1"></div>
+              <div class="thumb-shape thumb-shape--sn-head"></div>
+              <div class="thumb-shape thumb-shape--food"></div>
+            </div>
+          </div>
+          <div class="game-card__body">
+            <h2 class="game-card__title">Neon Snake</h2>
+            <p class="game-card__desc">Classic snake reimagined with neon visuals and pulsing beats.</p>
+            <span class="game-card__cta">Play <span class="game-card__cta-arrow">→</span></span>
+          </div>
+        </a>
+
+        <!-- Pixel Maze -->
+        <a href="pixel-maze/" class="game-card game-card--green-yellow" id="card-pixel-maze">
+          <div class="game-card__thumb game-card__thumb--maze">
+            <!-- Maze Walls -->
+            <div class="thumb-shape thumb-shape--maze-line thumb-shape--ml-1"></div>
+            <div class="thumb-shape thumb-shape--maze-line thumb-shape--ml-2"></div>
+            <div class="thumb-shape thumb-shape--maze-line thumb-shape--ml-3"></div>
+            <div class="thumb-shape thumb-shape--maze-line thumb-shape--ml-4"></div>
+            <div class="thumb-shape thumb-shape--maze-line thumb-shape--ml-5"></div>
+            <div class="thumb-shape thumb-shape--maze-line thumb-shape--ml-6"></div>
+            <div class="thumb-shape thumb-shape--maze-line thumb-shape--ml-7"></div>
+            <div class="thumb-shape thumb-shape--maze-line thumb-shape--ml-8"></div>
+            <div class="thumb-shape thumb-shape--maze-line thumb-shape--ml-9"></div>
+            <div class="thumb-shape thumb-shape--maze-line thumb-shape--ml-10"></div>
+            <div class="thumb-shape thumb-shape--maze-line thumb-shape--ml-11"></div>
+            <div class="thumb-shape thumb-shape--maze-line thumb-shape--ml-12"></div>
+            <!-- Entities -->
+            <div class="thumb-shape thumb-shape--player"></div>
+            <div class="thumb-shape thumb-shape--exit"></div>
+          </div>
+          <div class="game-card__body">
+            <h2 class="game-card__title">Pixel Maze</h2>
+            <p class="game-card__desc">Navigate procedurally generated mazes that grow more complex each level.</p>
+            <span class="game-card__cta">Play <span class="game-card__cta-arrow">→</span></span>
+          </div>
+        </a>
+
+      </section>
+
+      <!-- Coming Soon Section -->
+      <section class="upcoming-games" id="upcoming-games" aria-label="Coming Soon">
+        <h2 class="section-title">Coming Soon to the Arcade</h2>
+        <ul class="upcoming-list">
+          <li class="upcoming-item">
+            <div class="upcoming-item__bullet"></div>
+            <div class="upcoming-item__text">
+              <h3 class="upcoming-item__title">Quantum Checkers</h3>
+              <p class="upcoming-item__desc">A strategic twist on the classic game featuring teleportation and entangled pieces.</p>
+            </div>
+          </li>
+          <li class="upcoming-item">
+            <div class="upcoming-item__bullet"></div>
+            <div class="upcoming-item__text">
+              <h3 class="upcoming-item__title">Cyber Pong</h3>
+              <p class="upcoming-item__desc">High-speed, physics-based paddle action with explosive power-ups and neon visuals.</p>
+            </div>
+          </li>
+          <li class="upcoming-item">
+            <div class="upcoming-item__bullet"></div>
+            <div class="upcoming-item__text">
+              <h3 class="upcoming-item__title">Asteroid Miner</h3>
+              <p class="upcoming-item__desc">A relaxing idle clicker where you extract rare minerals from deep space anomalies.</p>
+            </div>
+          </li>
+          <li class="upcoming-item">
+            <div class="upcoming-item__bullet"></div>
+            <div class="upcoming-item__text">
+              <h3 class="upcoming-item__title">Echo Memory</h3>
+              <p class="upcoming-item__desc">Test your recall in this synthwave-inspired audio and visual sequence puzzle.</p>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer" id="site-footer">
+      <p class="site-footer__text">
+        Built with <span class="site-footer__highlight">AI</span> · No servers · Just your browser
+      </p>
+    </footer>
+
+  </div>
+
+</body>
+</html>
