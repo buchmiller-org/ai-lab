@@ -8,16 +8,16 @@ A collection of AI-generated, client-side-only browser games. No servers, no bui
 
 | Game | Description |
 |------|-------------|
-| [Gravity Drop](games/gravity-drop/index.html) | Guide a falling orb through shifting gravity fields |
-| [Neon Snake](games/neon-snake/index.html) | Classic snake reimagined with neon visuals |
-| [Pixel Maze](games/pixel-maze/index.html) | Navigate procedurally generated mazes |
+| [Gravity Drop](games/gravity-drop/) | Guide a falling orb through shifting gravity fields |
+| [Neon Snake](games/neon-snake/) | Classic snake reimagined with neon visuals |
+| [Pixel Maze](games/pixel-maze/) | Navigate procedurally generated mazes |
 
 ## Running Locally
 
-Open `index.html` in any browser, or serve with:
+Open `index.html` in any browser, or run this from inside the project folder to serve it with the `ai-games` base path:
 
 ```sh
-npx -y serve .
+npx -y serve ..
 ```
 
 ## Project Structure

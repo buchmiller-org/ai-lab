@@ -72,14 +72,14 @@ Each game page (`games/<game-name>/index.html`) should:
 - Include `<meta charset="UTF-8">` and viewport meta tag
 - Include a descriptive `<title>` in the format: `Game Name — AI Games Arcade`
 - Include a meta description
-- Include a "← Back to Arcade" link pointing to `../../index.html`
+- Include a "← Back to Arcade" link pointing to `../../`
 
 ## Landing Page Cards
 
 When adding a game, a card must be added to `index.html` inside the `<section class="games-grid">` element. Each card follows this pattern:
 
 ```html
-<a href="games/<game-name>/index.html" class="game-card game-card--<color-theme>" id="card-<game-name>">
+<a href="games/<game-name>/" class="game-card game-card--<color-theme>" id="card-<game-name>">
   <div class="game-card__thumb game-card__thumb--<game>">
     <!-- Abstract thumbnail shapes -->
   </div>
@@ -95,7 +95,7 @@ Existing color themes: `game-card--purple-cyan`, `game-card--orange-pink`, `game
 
 ## Local Development
 
-To serve the site locally, use `cmd /c "npx -y serve . -l 3000"` (the `cmd /c` wrapper is needed on this system due to PowerShell execution policy).
+To serve the site locally, use `cmd /c "npx -y serve .. -l 3000"` from inside the project directory, so the site is served with `ai-games` as the base path (e.g. `http://localhost:3000/ai-games/`). The `cmd /c` wrapper is needed on this system due to PowerShell execution policy.
 
 ## Workflows
 
