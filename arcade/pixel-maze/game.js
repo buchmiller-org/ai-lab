@@ -379,6 +379,9 @@ function showScreen(screenEl) {
 
 function hideScreens() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('screen--active'));
+  if (document.activeElement && typeof document.activeElement.blur === 'function') {
+    document.activeElement.blur();
+  }
 }
 
 btnStart.addEventListener('click', () => {
