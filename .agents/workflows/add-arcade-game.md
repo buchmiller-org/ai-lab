@@ -2,11 +2,14 @@
 description: How to add a new game to the AI Games Arcade
 ---
 
-# Add a New Game
+# Add a New Arcade Game
+
+> **Note:** These instructions are specifically for adding new games to the AI Games Arcade suite (inside the `arcade/` directory). Games built outside of the arcade suite are not bound by these specific rules and structure.
+
 
 ## Steps
 
-1. **Create the game folder** — Create a new directory under `games/` with a kebab-case name (e.g. `games/space-invaders/`).
+1. **Create the game folder** — Create a new directory under `arcade/` with a kebab-case name (e.g. `arcade/space-invaders/`).
 
 2. **Create `index.html`** — Add an `index.html` file inside the game folder. This is the entry point. Include these in the `<head>`:
    - `<meta charset="UTF-8">` and viewport meta tag
@@ -34,7 +37,7 @@ description: How to add a new game to the AI Games Arcade
 
    > **Important:** Do NOT use `@import` in CSS for Google Fonts — always use `<link>` tags in HTML to avoid font flash (FOUT).
 
-3. **Add a card to the landing page** — Open the root `index.html` and add a new `<a class="game-card">` element inside `<section class="games-grid">`. Follow the card HTML pattern documented in `AGENTS.md`. Choose an existing color theme or create a new one.
+3. **Add a card to the landing page** — Open the arcade `index.html` (`arcade/index.html`) and add a new `<a class="game-card">` element inside `<section class="games-grid">`. Follow the card HTML pattern documented in `AGENTS.md`. Choose an existing color theme or create a new one.
 
 4. **Add thumbnail shapes** — Inside the card's `game-card__thumb` div, add abstract SVG or CSS shapes that visually represent the game. Look at existing cards in `index.html` for examples.
 

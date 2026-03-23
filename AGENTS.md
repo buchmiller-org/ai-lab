@@ -99,4 +99,4 @@ To serve the site locally, use `cmd /c "npx -y serve -l 3000"` from inside the p
 
 ## Workflows
 
-See `.agents/workflows/` for step-by-step procedures (e.g. `add-game.md`).
+See `.agents/workflows/` for step-by-step procedures (e.g. `add-arcade-game.md`).
