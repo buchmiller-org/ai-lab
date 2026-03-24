@@ -1,0 +1,141 @@
+/* Prototypes Landing Page Styles */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #1a1a2e; /* Dark theme to match Burnout Tower */
+  color: #e0e0e0;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 3rem;
+  max-width: 600px;
+}
+
+.back-link {
+  color: #888;
+  text-decoration: none;
+  font-size: 0.85rem;
+  display: inline-block;
+  margin-bottom: 1rem;
+  transition: color 0.2s;
+}
+
+.back-link:hover {
+  color: #00e5ff;
+}
+
+header h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 2.5rem;
+  color: #00e5ff;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.subtitle {
+  color: #a0a0b0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+main {
+  width: 100%;
+  max-width: 1000px;
+}
+
+/* Prototype Grid */
+.prototype-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+/* Prototype Card */
+.prototype-card {
+  display: block;
+  text-decoration: none;
+  background: #232338;
+  border: 1px solid #33334d;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+              box-shadow 0.3s ease,
+              border-color 0.3s ease;
+}
+
+.prototype-card__content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.prototype-card__title {
+  font-family: 'Orbitron', sans-serif;
+  color: #fff;
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.prototype-card__desc {
+  color: #aaa;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+  flex-grow: 1;
+}
+
+.prototype-card__cta {
+  color: #00e5ff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.prototype-card__cta-arrow {
+  margin-left: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+/* Hover Effects */
+.prototype-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 229, 255, 0.15);
+  border-color: #00e5ff;
+}
+
+.prototype-card:hover .prototype-card__cta-arrow {
+  transform: translateX(4px);
+}
+
+/* Subtle glow effect on hover */
+.prototype-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at center, rgba(0, 229, 255, 0.1) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.prototype-card:hover::before {
+  opacity: 1;
+}

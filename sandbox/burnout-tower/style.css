@@ -1,0 +1,65 @@
+/* Burnout Tower Prototype — Minimal Styling */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #1a1a2e;
+  color: #e0e0e0;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+header {
+  text-align: center;
+  padding: 1rem 1rem 0.5rem;
+  width: 100%;
+}
+
+header h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.5rem;
+  color: #00e5ff;
+  margin-top: 0.25rem;
+}
+
+.badge {
+  font-size: 0.6rem;
+  background: #ff4081;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  vertical-align: middle;
+  letter-spacing: 1px;
+}
+
+.back-link {
+  color: #888;
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+.back-link:hover {
+  color: #00e5ff;
+}
+
+#game-container {
+  margin: 0.5rem 0;
+}
+
+#game-container canvas {
+  border: 2px solid #333;
+  border-radius: 4px;
+}
+
+footer {
+  text-align: center;
+  padding: 0.5rem;
+  color: #777;
+  font-size: 0.8rem;
+}
