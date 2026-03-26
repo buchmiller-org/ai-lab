@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optics — Top-Down Office Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0a0a12;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 16px;
+      font-family: 'Inter', sans-serif;
+      color: #e0e0f0;
+    }
+    .page-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 14px;
+      width: 920px;
+    }
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 20px;
+      letter-spacing: 0.1em;
+    }
+    .proto-badge {
+      font-size: 11px;
+      color: #666688;
+      background: #1a1a28;
+      border: 1px solid #2a2a40;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    #game-container canvas { display: block; border-radius: 8px; }
+    a.back { font-size: 12px; color: #555577; text-decoration: none; margin-bottom: 12px; display: block; width: 920px; }
+    a.back:hover { color: #aaa; }
+    .legend {
+      margin-top: 14px;
+      display: flex;
+      gap: 24px;
+      font-size: 11px;
+      color: #555577;
+      width: 920px;
+    }
+    .legend span { display: flex; align-items: center; gap: 5px; }
+    .dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+<a class="back" href="../">← Back to Optics</a>
+<div class="page-header">
+  <h1>OPTICS</h1>
+  <span class="proto-badge">Prototype B — Top-Down Office</span>
+</div>
+<div id="game-container"></div>
+<div class="legend">
+  <span><span class="dot" style="background:#00c8ff"></span> You</span>
+  <span><span class="dot" style="background:#ff8c00"></span> Manager (boss)</span>
+  <span><span class="dot" style="background:#ffea00;opacity:0.5"></span> LOS cone – safe</span>
+  <span><span class="dot" style="background:#ff2244;opacity:0.7"></span> LOS cone – caught idle</span>
+  <span><span class="dot" style="background:#fbbf24"></span> Active task</span>
+  <span><span class="dot" style="background:#4ade80"></span> Break room</span>
+  <span>WASD / Arrow keys to move</span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════════
+const GW = 920, GH = 560;
+const PLAYER_SPEED   = 170;
+const BOSS_SPEED     = 65;
+const LOS_RANGE      = 230;
+const LOS_HALF_ANGLE = 0.50; // radians (~28.6° each side = ~57° cone)
+const STATION_RADIUS = 48;   // px — how close to count as "at station"
+const BREAK_RADIUS   = 68;
+const STAND_TIME     = 2.0;  // seconds to complete pickup or delivery
+const TASK_ESCALATE  = 35;   // seconds before unattended task escalates
+const SPAWN_MIN      = 15;   // seconds between task spawns
+const SPAWN_MAX      = 25;
+const SHIFT_DURATION = 180;  // seconds
+
+// Meter rates (per second)
+const RATE = {
+  los_busy_vis   : +3,    // in LOS and near a work station
+  los_busy_wb    : -2,    // wellbeing drain even while looking busy
+  los_idle_vis   : -8,    // in LOS but not near any station
+  los_idle_wb    : -5,
+  break_wb       : +6,    // in break room, no LOS
+  output_per_task: +18,   // on completing a task
+  escalate_pen   : -12,   // task escalated without pickup
+};
+
+const COL = {
+  floor       : 0x13131f,
+  wall        : 0x3a3a55,
+  carpet      : 0x1a1a2e,
+  player      : 0x00c8ff,
+  playerHold  : 0xfbbf24,
+  boss        : 0xff8c00,
+  bossBody    : 0xcc6600,
+  losNormal   : 0xffea00,
+  losAlert    : 0xff2244,
+  losBusy     : 0x44ff88,
+  desk        : 0x2d3a5a,
+  deskStroke  : 0x4455aa,
+  printer     : 0x3a2d5a,
+  printerStroke: 0x8855cc,
+  whiteboard  : 0x2d4a3a,
+  wbStroke    : 0x44aa66,
+  colleague   : 0x3a2a2a,
+  cStroke     : 0xaa5533,
+  breakFloor  : 0x0e2010,
+  breakBorder : 0x245c2a,
+  task        : 0xfbbf24,
+  hud         : 0x0f0f1a,
+  hudBorder   : 0x2a2a44,
+  wellbeing   : 0x4ade80,
+  output      : 0x60a5fa,
+  visibility  : 0xf59e0b,
+  danger      : 0xef4444,
+};
+
+// ═══════════════════════════════════════════════════
+//  STATIONS (work stations where tasks are picked up / delivered)
+// ═══════════════════════════════════════════════════
+const STATIONS_CFG = [
+  { id: 'desk',      x: 200, y: 280,  w: 80, h: 48,  col: COL.desk,       stroke: COL.deskStroke,    label: 'Your Desk',    isDelivery: true  },
+  { id: 'printer',   x: 740, y: 100,  w: 64, h: 48,  col: COL.printer,    stroke: COL.printerStroke, label: 'Printer',      isDelivery: false },
+  { id: 'colleague', x: 680, y: 400,  w: 80, h: 48,  col: COL.colleague,  stroke: COL.cStroke,       label: 'Colleague',    isDelivery: false },
+  { id: 'whiteboard',x: 460, y: 100,  w: 96, h: 36,  col: COL.whiteboard, stroke: COL.wbStroke,      label: 'Whiteboard',   isDelivery: false },
+];
+
+// Break room zone (top-left corner — boss never patrols here)
+const BREAK_ZONE = { x: 100, y: 460, r: BREAK_RADIUS, w: 130, h: 90 };
+
+// Boss patrol waypoints
+const PATROL_PTS = [
+  { x: 460, y: 200 },
+  { x: 680, y: 180 },
+  { x: 760, y: 350 },
+  { x: 560, y: 420 },
+  { x: 350, y: 380 },
+  { x: 320, y: 220 },
+];
+
+// ═══════════════════════════════════════════════════
+//  BOOT SCENE
+// ═══════════════════════════════════════════════════
+class BootScene extends Phaser.Scene {
+  constructor() { super('Boot'); }
+  create() {
+    // Player
+    let g = this.make.graphics({ add: false });
+    g.fillStyle(COL.player); g.fillRect(0, 0, 22, 22);
+    g.generateTexture('player', 22, 22); g.destroy();
+
+    // Boss
+    g = this.make.graphics({ add: false });
+    g.fillStyle(COL.boss); g.fillRect(0, 0, 22, 28);
+    g.generateTexture('boss', 22, 28); g.destroy();
+
+    this.scene.start('Game');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  GAME SCENE
+// ═══════════════════════════════════════════════════
+class GameScene extends Phaser.Scene {
+  constructor() { super('Game'); }
+
+  init() {
+    this.wellbeing  = 80;
+    this.output     = 40;
+    this.visibility = 30;
+    this.shiftElapsed = 0;
+    this.gameOver   = false;
+    this.holding    = false; // player is carrying a task
+    this.standTimer = 0;
+    this.standMode  = null; // 'pickup' | 'deliver'
+    this.standTarget= null;
+    this.nextSpawn  = Phaser.Math.Between(SPAWN_MIN, SPAWN_MAX);
+    this.tasks      = []; // array of { stationId, age, gfx, label }
+    this.patrolIdx  = 0;
+    this.patrolWait = 0;
+    this.bossMoving = true;
+    this.bossFacing = 0;
+  }
+
+  create() {
+    // ── Floor ──
+    this.add.rectangle(GW / 2, GH / 2, GW, GH, COL.carpet);
+
+    // ── Break room ──
+    this.add.rectangle(BREAK_ZONE.x, BREAK_ZONE.y, BREAK_ZONE.w, BREAK_ZONE.h, COL.breakFloor)
+      .setStrokeStyle(2, COL.breakBorder);
+    this.add.text(BREAK_ZONE.x, BREAK_ZONE.y - BREAK_ZONE.h / 2 + 12, 'BREAK ROOM', {
+      fontFamily: 'Orbitron', fontSize: '8px', color: '#245c2a', align: 'center',
+    }).setOrigin(0.5, 0);
+
+    // ── Walls ──
+    const W = 14;
+    [
+      [GW / 2, W / 2, GW, W],
+      [GW / 2, GH - W / 2, GW, W],
+      [W / 2, GH / 2, W, GH],
+      [GW - W / 2, GH / 2, W, GH],
+    ].forEach(([x, y, w, h]) => this.add.rectangle(x, y, w, h, COL.wall));
+
+    // ── Work stations ──
+    this.stationObj = {};
+    STATIONS_CFG.forEach(s => {
+      const r = this.add.rectangle(s.x, s.y, s.w, s.h, s.col).setStrokeStyle(2, s.stroke);
+      const lbl = this.add.text(s.x, s.y + s.h / 2 + 8, s.label, {
+        fontFamily: 'Inter', fontSize: '9px', color: '#888899',
+      }).setOrigin(0.5, 0);
+      this.stationObj[s.id] = { rect: r, label: lbl, cfg: s };
+    });
+
+    // ── LOS Graphics (drawn each frame) ──
+    this.losGfx = this.add.graphics().setDepth(5).setAlpha(0.22);
+    this.losLineGfx = this.add.graphics().setDepth(6).setAlpha(0.6);
+
+    // ── Boss ──
+    this.boss = this.physics.add.sprite(PATROL_PTS[0].x, PATROL_PTS[0].y, 'boss');
+    this.boss.setDepth(8).setCollideWorldBounds(true);
+
+    // Boss label
+    this.bossLbl = this.add.text(0, 0, '👔 MANAGER', {
+      fontFamily: 'Inter', fontSize: '9px', color: '#cc7700',
+    }).setDepth(12).setOrigin(0.5, 1);
+
+    // ── Player ──
+    this.player = this.physics.add.sprite(200, 280, 'player');
+    this.player.setDepth(10).setCollideWorldBounds(true).setTint(COL.player);
+
+    // ── Stand progress indicator ──
+    this.standGfx = this.add.graphics().setDepth(15);
+    this.standLbl = this.add.text(0, 0, '', {
+      fontFamily: 'Orbitron', fontSize: '10px', color: '#fbbf24',
+    }).setDepth(16).setOrigin(0.5, 1).setVisible(false);
+
+    // ── HUD ──
+    this.createHUD();
+
+    // ── Status text ──
+    this.statusText = this.add.text(GW / 2, GH - 22, '', {
+      fontFamily: 'Orbitron', fontSize: '11px', color: '#ffea00', align: 'center',
+    }).setOrigin(0.5).setDepth(20);
+
+    // ── Controls ──
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.wasd = this.input.keyboard.addKeys({
+      up: 'W', down: 'S', left: 'A', right: 'D',
+    });
+  }
+
+  // ── HUD ──────────────────────────────────────────
+  createHUD() {
+    const HUD_Y = 14;
+    this.add.rectangle(GW / 2, HUD_Y + 4, GW - 40, 36, COL.hud, 0.92)
+      .setStrokeStyle(1, COL.hudBorder).setDepth(18);
+
+    const makeBar = (x, label, colorName, id) => {
+      this.add.text(x - 60, HUD_Y, label, {
+        fontFamily: 'Orbitron', fontSize: '8px', color: colorName,
+      }).setOrigin(0, 0.5).setDepth(20);
+
+      const bg   = this.add.rectangle(x + 30, HUD_Y, 120, 8, 0x111122).setOrigin(0, 0.5).setDepth(20);
+      const fill = this.add.rectangle(x + 30, HUD_Y, 120, 8, Phaser.Display.Color.HexStringToColor(colorName).color)
+        .setOrigin(0, 0.5).setDepth(20);
+      const pct  = this.add.text(x + 156, HUD_Y, '80%', {
+        fontFamily: 'Inter', fontSize: '9px', color: '#aaa',
+      }).setOrigin(0, 0.5).setDepth(20);
+      this[`${id}Fill`] = fill;
+      this[`${id}Pct`]  = pct;
+    };
+
+    makeBar(80,  'WELLBEING ', '#4ade80', 'wb');
+    makeBar(380, 'OUTPUT    ', '#60a5fa', 'out');
+    makeBar(680, 'VISIBILITY', '#f59e0b', 'vis');
+
+    // Shift clock
+    this.clockText = this.add.text(GW - 60, HUD_Y, '9:00 AM', {
+      fontFamily: 'Orbitron', fontSize: '9px', color: '#666688',
+    }).setOrigin(0.5).setDepth(20);
+  }
+
+  updateHUD() {
+    const setBar = (fill, pct, val, col, dangerCol) => {
+      const clamped = Math.max(0, Math.min(100, val));
+      fill.width  = 120 * (clamped / 100);
+      pct.setText(`${Math.round(clamped)}%`);
+      fill.setFillStyle(clamped < 20 ? dangerCol : col);
+    };
+    setBar(this.wbFill,  this.wbPct,  this.wellbeing,  COL.wellbeing,  COL.danger);
+    setBar(this.outFill, this.outPct, this.output,      COL.output,     COL.danger);
+    setBar(this.visFill, this.visPct, this.visibility,  COL.visibility, COL.danger);
+
+    const progress = Math.min(this.shiftElapsed / SHIFT_DURATION, 1);
+    const totalMin = Math.floor(progress * 480 / 30) * 30;
+    const hh = 9 + Math.floor(totalMin / 60);
+    const mm = totalMin % 60;
+    const ap = hh >= 12 ? 'PM' : 'AM';
+    this.clockText.setText(`${hh > 12 ? hh - 12 : hh}:${String(mm).padStart(2,'0')} ${ap}`);
+  }
+
+  // ── LOS Helpers ──────────────────────────────────
+  isInLOS(px, py) {
+    const dx = px - this.boss.x, dy = py - this.boss.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > LOS_RANGE) return false;
+    const angle = Math.atan2(dy, dx);
+    const diff  = Phaser.Math.Angle.Wrap(angle - this.bossFacing);
+    return Math.abs(diff) <= LOS_HALF_ANGLE;
+  }
+
+  drawLOS(color) {
+    this.losGfx.clear();
+    this.losGfx.fillStyle(color, 1);
+    this.losGfx.beginPath();
+    this.losGfx.moveTo(this.boss.x, this.boss.y);
+    const steps = 24;
+    for (let i = 0; i <= steps; i++) {
+      const a = (this.bossFacing - LOS_HALF_ANGLE) + (LOS_HALF_ANGLE * 2 * i / steps);
+      this.losGfx.lineTo(
+        this.boss.x + Math.cos(a) * LOS_RANGE,
+        this.boss.y + Math.sin(a) * LOS_RANGE,
+      );
+    }
+    this.losGfx.closePath();
+    this.losGfx.fillPath();
+
+    // Outline
+    this.losLineGfx.clear();
+    this.losLineGfx.lineStyle(1, color, 1);
+    this.losLineGfx.beginPath();
+    this.losLineGfx.moveTo(this.boss.x, this.boss.y);
+    for (let i = 0; i <= steps; i++) {
+      const a = (this.bossFacing - LOS_HALF_ANGLE) + (LOS_HALF_ANGLE * 2 * i / steps);
+      this.losLineGfx.lineTo(
+        this.boss.x + Math.cos(a) * LOS_RANGE,
+        this.boss.y + Math.sin(a) * LOS_RANGE,
+      );
+    }
+    this.losLineGfx.closePath();
+    this.losLineGfx.strokePath();
+  }
+
+  isNearWorkStation(px, py) {
+    return STATIONS_CFG.some(s => {
+      const d = Phaser.Math.Distance.Between(px, py, s.x, s.y);
+      return d < STATION_RADIUS;
+    });
+  }
+
+  inBreakRoom(px, py) {
+    const bx = BREAK_ZONE.x, by = BREAK_ZONE.y;
+    const hw = BREAK_ZONE.w / 2, hh = BREAK_ZONE.h / 2;
+    return px >= bx - hw && px <= bx + hw && py >= by - hh && py <= by + hh;
+  }
+
+  nearStation(px, py, stationId) {
+    const s = STATIONS_CFG.find(s => s.id === stationId);
+    if (!s) return false;
+    return Phaser.Math.Distance.Between(px, py, s.x, s.y) < STATION_RADIUS;
+  }
+
+  // ── Boss Patrol ───────────────────────────────────
+  updateBoss(dt) {
+    const target = PATROL_PTS[this.patrolIdx];
+
+    if (this.patrolWait > 0) {
+      this.patrolWait -= dt;
+      this.boss.setVelocity(0, 0);
+      if (this.patrolWait <= 0) this.bossMoving = true;
+      return;
+    }
+
+    const dx = target.x - this.boss.x;
+    const dy = target.y - this.boss.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist < 8) {
+      this.boss.setVelocity(0, 0);
+      this.patrolIdx = (this.patrolIdx + 1) % PATROL_PTS.length;
+      this.patrolWait = Phaser.Math.FloatBetween(1.0, 2.5);
+      this.bossMoving = false;
+    } else {
+      const speed = BOSS_SPEED;
+      this.boss.setVelocity((dx / dist) * speed, (dy / dist) * speed);
+      this.bossFacing = Math.atan2(dy, dx);
+    }
+  }
+
+  // ── Task System ───────────────────────────────────
+  spawnTask() {
+    // Pick a random non-delivery station that doesn't already have a task
+    const pickable = STATIONS_CFG.filter(s => !s.isDelivery);
+    const free = pickable.filter(s => !this.tasks.find(t => t.stationId === s.id));
+    if (!free.length) return;
+
+    const s = Phaser.Utils.Array.GetRandom(free);
+    const gfx = this.add.graphics().setDepth(7);
+    // Draw pulsing dot at station
+    gfx.fillStyle(COL.task, 1);
+    gfx.fillCircle(s.x, s.y - 24, 7);
+    gfx.lineStyle(2, 0xffffff, 0.4);
+    gfx.strokeCircle(s.x, s.y - 24, 7);
+
+    const lbl = this.add.text(s.x, s.y - 36, '!', {
+      fontFamily: 'Orbitron', fontSize: '12px', color: '#fbbf24',
+    }).setOrigin(0.5).setDepth(8);
+
+    this.tasks.push({ stationId: s.id, age: 0, gfx, lbl });
+
+    this.tweens.add({
+      targets: [gfx, lbl], scaleX: 1.25, scaleY: 1.25,
+      yoyo: true, repeat: -1, duration: 600,
+    });
+
+    this.nextSpawn = this.shiftElapsed + Phaser.Math.Between(SPAWN_MIN, SPAWN_MAX);
+  }
+
+  updateTasks(dt) {
+    for (let i = this.tasks.length - 1; i >= 0; i--) {
+      const t = this.tasks[i];
+      t.age += dt;
+      if (t.age > TASK_ESCALATE) {
+        // Task escalated
+        this.output = Math.max(0, this.output + RATE.escalate_pen);
+        this.showFloatingText(
+          STATIONS_CFG.find(s => s.id === t.stationId)?.x ?? GW / 2,
+          STATIONS_CFG.find(s => s.id === t.stationId)?.y ?? GH / 2,
+          `ESCALATED  ${RATE.escalate_pen} O`, '#ef4444'
+        );
+        t.gfx.destroy();
+        t.lbl.destroy();
+        this.tasks.splice(i, 1);
+      }
+    }
+
+    // Auto-spawn
+    if (this.shiftElapsed >= this.nextSpawn) {
+      this.spawnTask();
+    }
+  }
+
+  // ── Stand-to-interact ─────────────────────────────
+  updateStand(dt) {
+    const px = this.player.x, py = this.player.y;
+    const spd = Math.sqrt(this.player.body.velocity.x ** 2 + this.player.body.velocity.y ** 2);
+
+    this.standGfx.clear();
+    this.standLbl.setVisible(false);
+
+    // Determine what the player is near
+    const taskStation = this.tasks.find(t => this.nearStation(px, py, t.stationId));
+    const atDesk = this.nearStation(px, py, 'desk');
+
+    let interacting = false;
+
+    if (!this.holding && taskStation && spd < 20) {
+      // Near a task, not holding — pickup mode
+      if (this.standMode !== 'pickup' || this.standTarget !== taskStation.stationId) {
+        this.standMode = 'pickup';
+        this.standTarget = taskStation.stationId;
+        this.standTimer = 0;
+      }
+      this.standTimer += dt;
+      interacting = true;
+      this.drawStandProgress(px, py, this.standTimer / STAND_TIME, '#fbbf24');
+      this.standLbl.setText('PICK UP').setVisible(true).setPosition(px, py - 28);
+
+      if (this.standTimer >= STAND_TIME) {
+        // Pick up
+        this.holding = true;
+        this.player.setTint(COL.playerHold);
+        taskStation.gfx.destroy();
+        taskStation.lbl.destroy();
+        this.tasks = this.tasks.filter(t => t !== taskStation);
+        this.standTimer = 0;
+        this.standMode = null;
+        this.showFloatingText(px, py, 'Task picked up', '#fbbf24');
+      }
+    } else if (this.holding && atDesk && spd < 20) {
+      // At desk, holding — deliver mode
+      if (this.standMode !== 'deliver') {
+        this.standMode = 'deliver';
+        this.standTimer = 0;
+      }
+      this.standTimer += dt;
+      interacting = true;
+      this.drawStandProgress(px, py, this.standTimer / STAND_TIME, '#60a5fa');
+      this.standLbl.setText('DELIVER').setVisible(true).setPosition(px, py - 28);
+
+      if (this.standTimer >= STAND_TIME) {
+        // Complete task
+        this.holding = false;
+        this.player.setTint(COL.player);
+        this.output = Math.min(100, this.output + RATE.output_per_task);
+        this.standTimer = 0;
+        this.standMode = null;
+        this.showFloatingText(px, py, `+${RATE.output_per_task} Output`, '#60a5fa');
+      }
+    } else {
+      this.standMode = null;
+      this.standTimer = 0;
+    }
+  }
+
+  drawStandProgress(px, py, t, color) {
+    this.standGfx.clear();
+    this.standGfx.lineStyle(3, Phaser.Display.Color.HexStringToColor(color).color, 0.4);
+    this.standGfx.strokeCircle(px, py, 18);
+    this.standGfx.lineStyle(3, Phaser.Display.Color.HexStringToColor(color).color, 1);
+    this.standGfx.beginPath();
+    this.standGfx.arc(px, py, 18, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(t, 1), false);
+    this.standGfx.strokePath();
+  }
+
+  // ── Floating text ─────────────────────────────────
+  showFloatingText(x, y, msg, color) {
+    const t = this.add.text(x, y - 10, msg, {
+      fontFamily: 'Inter', fontSize: '11px', color, fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(30);
+    this.tweens.add({
+      targets: t, y: t.y - 28, alpha: 0, duration: 1200,
+      onComplete: () => t.destroy(),
+    });
+  }
+
+  // ── Crisis check ──────────────────────────────────
+  checkCrisis() {
+    if (this.wellbeing  <= 0) return { title:'BURNOUT',    reason:'Wellbeing collapsed. You booked a mental health day that became a week.' };
+    if (this.output     <= 0) return { title:'TERMINATED', reason:'Your output fell below acceptable thresholds. HR followed up.' };
+    if (this.visibility <= 0) return { title:'LAID OFF',   reason:'The restructuring list had your name. No one advocated for you.' };
+    return null;
+  }
+
+  // ── End ───────────────────────────────────────────
+  endGame(result) {
+    if (this.gameOver) return;
+    this.gameOver = true;
+    this.player.setVelocity(0, 0);
+    this.boss.setVelocity(0, 0);
+
+    const isWin = result === 'shift';
+    const overlay = this.add.rectangle(GW / 2, GH / 2, GW, GH, 0x000000, 0.75).setDepth(50);
+    const title = isWin ? '🔔 SHIFT OVER' : result.title;
+    const sub   = isWin
+      ? `You survived the shift.\nW: ${Math.round(this.wellbeing)}%  O: ${Math.round(this.output)}%  V: ${Math.round(this.visibility)}%`
+      : result.reason;
+
+    this.add.text(GW / 2, GH / 2 - 28, title, {
+      fontFamily: 'Orbitron', fontSize: '26px',
+      color: isWin ? '#4ade80' : '#ef4444',
+    }).setOrigin(0.5).setDepth(51);
+
+    this.add.text(GW / 2, GH / 2 + 16, sub, {
+      fontFamily: 'Inter', fontSize: '13px', color: '#aaa', align: 'center',
+    }).setOrigin(0.5).setDepth(51);
+
+    const btn = this.add.text(GW / 2, GH / 2 + 68, 'PLAY AGAIN', {
+      fontFamily: 'Orbitron', fontSize: '13px', color: '#60a5fa',
+      padding: { x: 16, y: 8 }, backgroundColor: '#1a1a30',
+    }).setOrigin(0.5).setDepth(51).setInteractive({ useHandCursor: true });
+    btn.on('pointerdown', () => this.scene.restart());
+  }
+
+  // ── Main Update ───────────────────────────────────
+  update(time, delta) {
+    if (this.gameOver) return;
+    const dt = delta / 1000;
+    this.shiftElapsed += dt;
+
+    // ── Player movement ──
+    let vx = 0, vy = 0;
+    if (this.cursors.left.isDown  || this.wasd.left.isDown)  vx = -1;
+    if (this.cursors.right.isDown || this.wasd.right.isDown) vx =  1;
+    if (this.cursors.up.isDown    || this.wasd.up.isDown)    vy = -1;
+    if (this.cursors.down.isDown  || this.wasd.down.isDown)  vy =  1;
+    if (vx !== 0 && vy !== 0) { vx *= 0.707; vy *= 0.707; }
+    this.player.setVelocity(vx * PLAYER_SPEED, vy * PLAYER_SPEED);
+
+    // ── Boss patrol ──
+    this.updateBoss(dt);
+    this.bossLbl.setPosition(this.boss.x, this.boss.y - 20);
+
+    // ── LOS evaluation ──
+    const px = this.player.x, py = this.player.y;
+    const observed = this.isInLOS(px, py);
+    const nearWork = this.isNearWorkStation(px, py);
+    const inBreak  = this.inBreakRoom(px, py);
+
+    let losColor = COL.losNormal;
+    let statusMsg = '';
+
+    if (observed) {
+      if (nearWork) {
+        // Looking busy
+        losColor = COL.losBusy;
+        this.wellbeing  = Math.max(0, this.wellbeing  + RATE.los_busy_wb  * dt);
+        this.visibility = Math.min(100, this.visibility + RATE.los_busy_vis * dt);
+        statusMsg = '👔 LOOKING BUSY';
+      } else {
+        // Caught idle
+        losColor = COL.losAlert;
+        this.wellbeing  = Math.max(0, this.wellbeing  + RATE.los_idle_wb  * dt);
+        this.visibility = Math.max(0, this.visibility + RATE.los_idle_vis * dt);
+        statusMsg = '⚠  CAUGHT IDLE';
+      }
+    } else if (inBreak) {
+      this.wellbeing = Math.min(100, this.wellbeing + RATE.break_wb * dt);
+      statusMsg = '☕ RECOVERING';
+    }
+
+    // Tint player when observed-idle
+    if (observed && !nearWork) {
+      this.player.setTint(this.holding ? 0xffaaaa : COL.danger);
+    } else if (!this.holding) {
+      this.player.setTint(COL.player);
+    }
+
+    this.drawLOS(losColor);
+    this.statusText.setText(statusMsg);
+
+    // ── Tasks ──
+    this.updateTasks(dt);
+    this.updateStand(dt);
+
+    // ── HUD ──
+    this.updateHUD();
+
+    // ── Crisis / Shift end ──
+    const crisis = this.checkCrisis();
+    if (crisis) { this.endGame(crisis); return; }
+    if (this.shiftElapsed >= SHIFT_DURATION) { this.endGame('shift'); }
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  LAUNCH
+// ═══════════════════════════════════════════════════
+new Phaser.Game({
+  type: Phaser.AUTO,
+  width: GW,
+  height: GH,
+  parent: 'game-container',
+  backgroundColor: COL.floor,
+  physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
+  scene: [BootScene, GameScene],
+});
+</script>
+</body>
+</html>

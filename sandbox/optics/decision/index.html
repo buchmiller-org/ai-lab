@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optics — Decision Engine Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f17;
+      --panel: #1a1a28;
+      --border: #2a2a40;
+      --text: #e0e0f0;
+      --text-dim: #777799;
+      --wellbeing: #4ade80;
+      --output: #60a5fa;
+      --visibility: #f59e0b;
+      --danger: #ef4444;
+      --card-bg: #1e1e30;
+      --choice-bg: #22223a;
+      --choice-hover: #2d2d50;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 24px 16px 48px;
+    }
+
+    /* ── Header ── */
+    .header {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 22px;
+      letter-spacing: 0.08em;
+      color: var(--text);
+    }
+    .header .proto-badge {
+      font-size: 11px;
+      color: var(--text-dim);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── Status bar ── */
+    .status-bar {
+      width: 100%;
+      max-width: 720px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 24px;
+      align-items: stretch;
+    }
+    .quarter-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 110px;
+    }
+    .quarter-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+    .quarter-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 20px;
+      color: var(--text);
+    }
+    .day-progress {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+    .divider {
+      width: 1px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+    .meters {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      justify-content: center;
+    }
+    .meter-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .meter-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      width: 90px;
+      flex-shrink: 0;
+      text-transform: uppercase;
+    }
+    .meter-label.wellbeing { color: var(--wellbeing); }
+    .meter-label.output    { color: var(--output); }
+    .meter-label.visibility { color: var(--visibility); }
+    .meter-track {
+      flex: 1;
+      height: 10px;
+      background: #111122;
+      border-radius: 5px;
+      overflow: hidden;
+      position: relative;
+    }
+    .meter-fill {
+      height: 100%;
+      border-radius: 5px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .meter-fill.wellbeing  { background: var(--wellbeing); }
+    .meter-fill.output     { background: var(--output); }
+    .meter-fill.visibility { background: var(--visibility); }
+    .meter-fill.danger     { background: var(--danger); }
+    .meter-pct {
+      font-size: 11px;
+      color: var(--text-dim);
+      width: 32px;
+      text-align: right;
+    }
+
+    /* ── Event card ── */
+    .event-card {
+      width: 100%;
+      max-width: 720px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .event-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Placeholder thumbnail */
+    .event-thumb {
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .thumb-shape {
+      border-radius: 6px;
+      opacity: 0.7;
+    }
+
+    .event-body {
+      padding: 20px 24px;
+    }
+    .event-type-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    .badge-task     { background: rgba(96, 165, 250, 0.15); color: var(--output); border: 1px solid rgba(96,165,250,0.3); }
+    .badge-social   { background: rgba(245, 158, 11, 0.15); color: var(--visibility); border: 1px solid rgba(245,158,11,0.3); }
+    .badge-random   { background: rgba(167, 139, 250, 0.15); color: #a78bfa; border: 1px solid rgba(167,139,250,0.3); }
+    .badge-quiet    { background: rgba(74, 222, 128, 0.15); color: var(--wellbeing); border: 1px solid rgba(74,222,128,0.3); }
+
+    .event-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 15px;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+    .event-desc {
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    /* ── Choices ── */
+    .choices {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .choice-btn {
+      background: var(--choice-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      text-align: left;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+    }
+    .choice-btn:hover {
+      background: var(--choice-hover);
+      border-color: #444466;
+      transform: translateX(2px);
+    }
+    .choice-btn:active { transform: translateX(0); }
+    .choice-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .choice-label {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    .choice-effects {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .effect-tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 7px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .effect-pos { background: rgba(74,222,128,0.12); color: #4ade80; }
+    .effect-neg { background: rgba(239,68,68,0.12); color: #f87171; }
+    .effect-neu { background: rgba(148,163,184,0.12); color: #94a3b8; }
+
+    /* ── Result flash ── */
+    .result-banner {
+      width: 100%;
+      max-width: 720px;
+      border-radius: 8px;
+      padding: 12px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .result-banner.show { opacity: 1; }
+    .result-banner.crisis { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+    .result-banner.ok    { background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.2); color: #86efac; }
+
+    /* ── Progress dots ── */
+    .progress-dots {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 0.3s;
+    }
+    .dot.done { background: var(--text-dim); }
+    .dot.current { background: var(--text); }
+
+    /* ── Performance Review overlay ── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s;
+    }
+    .overlay.show { opacity: 1; pointer-events: all; }
+    .review-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px 40px;
+      max-width: 480px;
+      width: 90%;
+      text-align: center;
+    }
+    .review-heading {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .review-rating {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 32px;
+      margin-bottom: 6px;
+    }
+    .review-rating.exceeds  { color: #fbbf24; }
+    .review-rating.meets    { color: var(--wellbeing); }
+    .review-rating.pip      { color: var(--danger); }
+    .review-rating.fired    { color: var(--danger); }
+    .review-rating.burnout  { color: #a78bfa; }
+    .review-sub {
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+    .review-meters {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-bottom: 28px;
+    }
+    .review-meter {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .review-meter-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); }
+    .review-meter-value { font-family: 'Orbitron', sans-serif; font-size: 20px; }
+    .review-btn {
+      background: #2d2d50;
+      border: 1px solid #444466;
+      border-radius: 8px;
+      padding: 12px 28px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .review-btn:hover { background: #3a3a66; }
+
+    /* ── Burnout overlay ── */
+    .burnout-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s;
+    }
+    .burnout-overlay.show { opacity: 1; pointer-events: all; }
+    .burnout-card {
+      background: #1a0a0a;
+      border: 1px solid #5a1515;
+      border-radius: 16px;
+      padding: 40px 48px;
+      max-width: 440px;
+      width: 90%;
+      text-align: center;
+    }
+    .burnout-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 26px;
+      color: var(--danger);
+      margin-bottom: 12px;
+    }
+    .burnout-sub { font-size: 13px; color: #cc8888; line-height: 1.7; margin-bottom: 24px; }
+    .burnout-reason { font-family: 'Orbitron', sans-serif; font-size: 12px; color: #994444; margin-bottom: 24px; letter-spacing: 0.1em; }
+
+    a.back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      font-size: 12px;
+      color: var(--text-dim);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+    }
+    a.back-link:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<a class="back-link" href="../">← Back to Optics</a>
+
+<div class="header">
+  <h1>OPTICS</h1>
+  <span class="proto-badge">Prototype A — Decision Engine</span>
+</div>
+
+<!-- Status Bar -->
+<div class="status-bar">
+  <div class="quarter-info">
+    <div class="quarter-label">QUARTER</div>
+    <div class="quarter-value" id="quarter-label">Q1</div>
+    <div class="day-progress" id="day-progress">Day 1 of 12</div>
+  </div>
+  <div class="divider"></div>
+  <div class="meters">
+    <div class="meter-row">
+      <span class="meter-label wellbeing">Wellbeing</span>
+      <div class="meter-track"><div class="meter-fill wellbeing" id="bar-wellbeing" style="width:70%"></div></div>
+      <span class="meter-pct" id="pct-wellbeing">70%</span>
+    </div>
+    <div class="meter-row">
+      <span class="meter-label output">Output</span>
+      <div class="meter-track"><div class="meter-fill output" id="bar-output" style="width:50%"></div></div>
+      <span class="meter-pct" id="pct-output">50%</span>
+    </div>
+    <div class="meter-row">
+      <span class="meter-label visibility">Visibility</span>
+      <div class="meter-track"><div class="meter-fill visibility" id="bar-visibility" style="width:40%"></div></div>
+      <span class="meter-pct" id="pct-visibility">40%</span>
+    </div>
+  </div>
+</div>
+
+<!-- Progress dots -->
+<div class="progress-dots" id="progress-dots"></div>
+
+<!-- Result banner -->
+<div class="result-banner" id="result-banner"></div>
+
+<!-- Event card -->
+<div class="event-card" id="event-card">
+  <div class="event-thumb" id="event-thumb"></div>
+  <div class="event-body">
+    <div class="event-type-badge" id="event-badge">Task</div>
+    <div class="event-title" id="event-title">Event Title</div>
+    <div class="event-desc" id="event-desc">Event description.</div>
+  </div>
+</div>
+
+<!-- Choices -->
+<div class="choices" id="choices"></div>
+
+<!-- Performance Review overlay -->
+<div class="overlay" id="review-overlay">
+  <div class="review-card">
+    <div class="review-heading">Q<span id="rev-q">1</span> Performance Review</div>
+    <div class="review-rating" id="rev-rating">Meets Expectations</div>
+    <div class="review-sub" id="rev-sub">Your quarter was unremarkable. That might be fine.</div>
+    <div class="review-meters">
+      <div class="review-meter">
+        <div class="review-meter-label">Wellbeing</div>
+        <div class="review-meter-value" id="rev-w" style="color:var(--wellbeing)">–</div>
+      </div>
+      <div class="review-meter">
+        <div class="review-meter-label">Output</div>
+        <div class="review-meter-value" id="rev-o" style="color:var(--output)">–</div>
+      </div>
+      <div class="review-meter">
+        <div class="review-meter-label">Visibility</div>
+        <div class="review-meter-value" id="rev-v" style="color:var(--visibility)">–</div>
+      </div>
+    </div>
+    <button class="review-btn" id="rev-btn">Continue to Q<span id="rev-next-q">2</span> →</button>
+  </div>
+</div>
+
+<!-- Burnout overlay -->
+<div class="burnout-overlay" id="burnout-overlay">
+  <div class="burnout-card">
+    <div class="burnout-title" id="burnout-title">BURNOUT</div>
+    <div class="burnout-reason" id="burnout-reason">WELLBEING REACHED ZERO</div>
+    <div class="burnout-sub" id="burnout-sub">You stare at your monitor. Nothing loads. You realize you've been holding your breath.</div>
+    <button class="review-btn" id="burnout-btn">Try Again</button>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// GAME STATE
+// ─────────────────────────────────────────
+const EVENTS_PER_QUARTER = 12;
+const MAX_QUARTERS = 4;
+
+let state = {
+  quarter: 1,
+  day: 0,
+  wellbeing: 70,
+  output: 50,
+  visibility: 40,
+};
+
+// ─────────────────────────────────────────
+// EVENT DEFINITIONS
+// Event shape:
+//   type: 'task' | 'social' | 'random' | 'quiet'
+//   title: string
+//   desc: string  ← will be shown as a generic descriptor (no flavor text)
+//   thumb: { bg, shapes[] }
+//   choices: [{ label, effects: { w, o, v } }]
+// ─────────────────────────────────────────
+
+const EVENT_POOL = [
+
+  // ── TASK EVENTS ──
+  {
+    type: 'task',
+    title: 'Report Due Friday',
+    desc: 'A report has been assigned to you. It requires focused work time.',
+    thumb: { bg: '#0d1a2d', shapes: [
+      { w:120, h:12, color:'#1d4ed8', top:30, left:40 },
+      { w:80,  h:12, color:'#1d4ed8', top:52, left:40 },
+      { w:60,  h:12, color:'#2d5edb', top:74, left:40 },
+    ]},
+    choices: [
+      { label: 'Do it yourself (focused work block)', effects: { w:-15, o:+20, v:0 } },
+      { label: 'Delegate to a colleague', effects: { w:0, o:+5, v:-5 } },
+      { label: 'Request a deadline extension', effects: { w:+5, o:0, v:-10 } },
+      { label: 'Quietly deprioritize it', effects: { w:+10, o:-10, v:0 } },
+    ],
+  },
+  {
+    type: 'task',
+    title: 'Cross-Team Collaboration Request',
+    desc: 'Another team needs your help on their project. It is not in your job description.',
+    thumb: { bg: '#1a1a0a', shapes: [
+      { w:40, h:40, color:'#78350f', top:20, left:60 },
+      { w:40, h:40, color:'#78350f', top:20, left:120 },
+      { w:40, h:40, color:'#92400e', top:20, left:180 },
+    ]},
+    choices: [
+      { label: 'Help them fully — takes significant time', effects: { w:-10, o:-5, v:+15 } },
+      { label: 'Help a little, set boundaries', effects: { w:0, o:0, v:+5 } },
+      { label: 'Decline politely', effects: { w:+5, o:0, v:-10 } },
+    ],
+  },
+  {
+    type: 'task',
+    title: 'Urgent Bug in Your Last Deliverable',
+    desc: 'An issue was found in work you submitted. Someone is escalating.',
+    thumb: { bg: '#1a0a0a', shapes: [
+      { w:80, h:80, color:'#7f1d1d', top:10, left:100, radius:'50%' },
+      { w:20, h:20, color:'#ef4444', top:45, left:140, radius:'50%' },
+    ]},
+    choices: [
+      { label: 'Drop everything and fix it now', effects: { w:-15, o:+15, v:+5 } },
+      { label: 'Fix it properly — ask for time', effects: { w:-5, o:+10, v:-5 } },
+      { label: 'Explain why it is acceptable as-is', effects: { w:0, o:0, v:-15 } },
+    ],
+  },
+  {
+    type: 'task',
+    title: 'New Process Rollout',
+    desc: 'You are asked to learn and adopt a new internal tool or process.',
+    thumb: { bg: '#0a1a1a', shapes: [
+      { w:60, h:60, color:'#134e4a', top:20, left:30 },
+      { w:10, h:40, color:'#0d9488', top:30, left:110 },
+      { w:60, h:60, color:'#0f766e', top:20, left:140 },
+    ]},
+    choices: [
+      { label: 'Invest time to learn it properly', effects: { w:-10, o:-5, v:+10 } },
+      { label: 'Learn the minimum to get by', effects: { w:0, o:0, v:0 } },
+      { label: 'Ignore it and keep your old method', effects: { w:+5, o:+5, v:-10 } },
+    ],
+  },
+  {
+    type: 'task',
+    title: 'Stretch Assignment Offered',
+    desc: 'Your manager is offering you a high-profile project. It is more work than you currently have.',
+    thumb: { bg: '#0d1a2d', shapes: [
+      { w:30, h:80, color:'#1e3a8a', top:10, left:60 },
+      { w:30, h:110, color:'#1e40af', top:10, left:100 },
+      { w:30, h:60, color:'#2563eb', top:10, left:140 },
+    ]},
+    choices: [
+      { label: 'Accept it — great opportunity', effects: { w:-15, o:+10, v:+20 } },
+      { label: 'Accept reluctantly, negotiate scope', effects: { w:-5, o:+5, v:+10 } },
+      { label: 'Decline — you are already at capacity', effects: { w:+10, o:0, v:-15 } },
+    ],
+  },
+
+  // ── SOCIAL EVENTS ──
+  {
+    type: 'social',
+    title: 'Optional Team Lunch',
+    desc: 'A team lunch is happening today. Attendance is described as optional.',
+    thumb: { bg: '#1a1200', shapes: [
+      { w:30, h:30, color:'#854d0e', top:30, left:50, radius:'50%' },
+      { w:30, h:30, color:'#854d0e', top:30, left:100, radius:'50%' },
+      { w:30, h:30, color:'#92400e', top:30, left:150, radius:'50%' },
+      { w:30, h:30, color:'#78350f', top:30, left:200, radius:'50%' },
+    ]},
+    choices: [
+      { label: 'Attend the full lunch', effects: { w:-10, o:-10, v:+15 } },
+      { label: 'Show up for 20 minutes, then leave', effects: { w:-5, o:-5, v:+8 } },
+      { label: 'Skip it entirely', effects: { w:+5, o:+10, v:-10 } },
+    ],
+  },
+  {
+    type: 'social',
+    title: 'Volunteer for Culture Committee',
+    desc: 'HR is requesting volunteers to help organize company events.',
+    thumb: { bg: '#120a1a', shapes: [
+      { w:80, h:30, color:'#581c87', top:20, left:80 },
+      { w:60, h:30, color:'#6d28d9', top:60, left:90 },
+    ]},
+    choices: [
+      { label: 'Volunteer enthusiastically', effects: { w:-15, o:-5, v:+20 } },
+      { label: 'Volunteer minimally', effects: { w:-5, o:0, v:+8 } },
+      { label: 'Decline', effects: { w:+5, o:0, v:0 } },
+    ],
+  },
+  {
+    type: 'social',
+    title: 'Coffee Chat with a Senior Leader',
+    desc: 'A senior leader has offered to do informal coffee chats with the team.',
+    thumb: { bg: '#120c00', shapes: [
+      { w:50, h:50, color:'#78350f', top:20, left:80, radius:'50%' },
+      { w:50, h:50, color:'#451a03', top:20, left:150, radius:'50%' },
+    ]},
+    choices: [
+      { label: 'Sign up and prepare thoughtfully', effects: { w:-5, o:-5, v:+20 } },
+      { label: 'Sign up, no special prep', effects: { w:0, o:0, v:+10 } },
+      { label: 'Pass on it this time', effects: { w:+5, o:+5, v:0 } },
+    ],
+  },
+  {
+    type: 'social',
+    title: 'All-Hands Meeting Called',
+    desc: 'Leadership has scheduled a company-wide all-hands during your most productive hours.',
+    thumb: { bg: '#0a0a1a', shapes: [
+      { w:180, h:8, color:'#1e3a8a', top:30, left:30 },
+      { w:140, h:8, color:'#1e3a8a', top:50, left:50 },
+      { w:160, h:8, color:'#1e40af', top:70, left:40 },
+    ]},
+    choices: [
+      { label: 'Fully attend and engage', effects: { w:-10, o:-15, v:+15 } },
+      { label: 'Attend but multitask quietly', effects: { w:-5, o:-5, v:+5 } },
+      { label: 'Dial in, camera off', effects: { w:0, o:+5, v:-10 } },
+    ],
+  },
+
+  // ── RANDOM EVENTS ──
+  {
+    type: 'random',
+    title: 'Reorg Announced',
+    desc: 'Leadership announces a structural reorganization. Your team and reporting lines may change.',
+    thumb: { bg: '#0f0a1a', shapes: [
+      { w:50, h:50, color:'#4c1d95', top:15, left:40 },
+      { w:10, h:10, color:'#7c3aed', top:35, left:120, radius:'50%' },
+      { w:50, h:50, color:'#5b21b6', top:15, left:160 },
+    ]},
+    choices: [
+      { label: 'Network early, get close to new stakeholders', effects: { w:-10, o:-5, v:+15 } },
+      { label: 'Keep your head down and deliver', effects: { w:-5, o:+10, v:-5 } },
+      { label: 'Wait and see', effects: { w:0, o:0, v:-5 } },
+    ],
+  },
+  {
+    type: 'random',
+    title: 'A Peer Was Promoted Over You',
+    desc: 'Someone you consider a peer received a promotion. You were not mentioned.',
+    thumb: { bg: '#1a0a00', shapes: [
+      { w:40, h:80, color:'#7c2d12', top:10, left:80 },
+      { w:40, h:110, color:'#9a3412', top:10, left:140 },
+    ]},
+    choices: [
+      { label: 'Request a career conversation with manager', effects: { w:-5, o:0, v:+10 } },
+      { label: 'Focus on your own development quietly', effects: { w:+5, o:+10, v:-5 } },
+      { label: 'Step back emotionally, reassess', effects: { w:+15, o:-5, v:-10 } },
+    ],
+  },
+  {
+    type: 'random',
+    title: 'Scope Creep on Your Project',
+    desc: 'A project you are responsible for has grown significantly beyond its original scope.',
+    thumb: { bg: '#091a09', shapes: [
+      { w:40, h:40, color:'#14532d', top:20, left:40 },
+      { w:60, h:60, color:'#15803d', top:10, left:100 },
+      { w:80, h:80, color:'#166534', top:0,  left:160 },
+    ]},
+    choices: [
+      { label: 'Absorb the scope, push through', effects: { w:-20, o:+15, v:+5 } },
+      { label: 'Escalate and renegotiate scope', effects: { w:-5, o:0, v:+5 } },
+      { label: 'Deliver original scope only', effects: { w:0, o:-5, v:-10 } },
+    ],
+  },
+  {
+    type: 'random',
+    title: 'Technical Failure Before a Demo',
+    desc: 'Something broke. An important stakeholder demo is in one hour.',
+    thumb: { bg: '#1a0000', shapes: [
+      { w:80, h:80, color:'#7f1d1d', top:10, left:100, radius:'8px' },
+      { w:30, h:30, color:'#ef4444', top:30, left:120, radius:'50%' },
+    ]},
+    choices: [
+      { label: 'Cancel the demo, fix it properly', effects: { w:-5, o:0, v:-15 } },
+      { label: 'Improvise around the failure', effects: { w:-15, o:0, v:+5 } },
+      { label: 'Find a workaround — ship it', effects: { w:-10, o:+5, v:0 } },
+    ],
+  },
+
+  // ── QUIET MOMENTS ──
+  {
+    type: 'quiet',
+    title: 'Early Morning Window',
+    desc: 'You arrive before anyone else. The office is empty. No meetings for 90 minutes.',
+    thumb: { bg: '#050510', shapes: [
+      { w:200, h:2, color:'#1e40af', top:60, left:20 },
+      { w:20, h:20, color:'#fbbf24', top:20, left:30, radius:'50%' },
+    ]},
+    choices: [
+      { label: 'Deep work — focused output session', effects: { w:-15, o:+25, v:0 } },
+      { label: 'Strategic email to exec distribution', effects: { w:-5, o:0, v:+15 } },
+      { label: 'Decompress — read, reflect', effects: { w:+15, o:0, v:0 } },
+    ],
+  },
+  {
+    type: 'quiet',
+    title: 'Rare Free Afternoon',
+    desc: 'Meetings cleared. Nothing urgent. A genuinely open afternoon.',
+    thumb: { bg: '#030c03', shapes: [
+      { w:180, h:60, color:'#14532d', top:25, left:30, radius:'8px' },
+    ]},
+    choices: [
+      { label: 'Catch up on backlogged tasks', effects: { w:-10, o:+20, v:0 } },
+      { label: 'Work on something proactive and visible', effects: { w:-5, o:+5, v:+10 } },
+      { label: 'Actually rest — take a walk', effects: { w:+20, o:0, v:0 } },
+    ],
+  },
+  {
+    type: 'quiet',
+    title: 'Manager Traveling This Week',
+    desc: 'Your direct manager is out for the week. No daily check-ins.',
+    thumb: { bg: '#0a0a0a', shapes: [
+      { w:50, h:50, color:'#374151', top:20, left:80, radius:'50%' },
+      { w:20, h:20, color:'#6b7280', top:30, left:195, radius:'50%' },
+    ]},
+    choices: [
+      { label: 'Sprint on high-priority output', effects: { w:-10, o:+20, v:0 } },
+      { label: 'Recover some wellbeing — work at sustainable pace', effects: { w:+20, o:0, v:0 } },
+      { label: 'Invest in peer relationships and informal visibility', effects: { w:-5, o:0, v:+10 } },
+    ],
+  },
+];
+
+// ─────────────────────────────────────────
+// UTILITY
+// ─────────────────────────────────────────
+function clamp(v, min=0, max=100) { return Math.max(min, Math.min(max, v)); }
+
+function formatEffect(val, label) {
+  if (val === 0) return null;
+  const sign = val > 0 ? '+' : '';
+  const cls  = val > 0 ? 'effect-pos' : 'effect-neg';
+  return `<span class="effect-tag ${cls}">${sign}${val} ${label}</span>`;
+}
+
+function effectTags(effects) {
+  const parts = [
+    formatEffect(effects.w, 'W'),
+    formatEffect(effects.o, 'O'),
+    formatEffect(effects.v, 'V'),
+  ].filter(Boolean);
+  if (!parts.length) parts.push('<span class="effect-tag effect-neu">No effect</span>');
+  return parts.join('');
+}
+
+// ─────────────────────────────────────────
+// QUARTER EVENT SEQUENCE
+// ─────────────────────────────────────────
+// Shuffle and select a mix of event types per quarter
+function buildQuarterEvents() {
+  // Ensure at least 2 of each type if possible, fill with randoms
+  const grouped = { task: [], social: [], random: [], quiet: [] };
+  EVENT_POOL.forEach(e => grouped[e.type].push(e));
+
+  // Shuffle each group
+  Object.values(grouped).forEach(arr => arr.sort(() => Math.random() - 0.5));
+
+  const seq = [];
+  // Grab 3 tasks, 3 social, 3 random, 3 quiet
+  seq.push(...grouped.task.slice(0, 3));
+  seq.push(...grouped.social.slice(0, 3));
+  seq.push(...grouped.random.slice(0, 3));
+  seq.push(...grouped.quiet.slice(0, 3));
+
+  // Shuffle the combined sequence
+  seq.sort(() => Math.random() - 0.5);
+  return seq.slice(0, EVENTS_PER_QUARTER);
+}
+
+let quarterEvents = [];
+let currentEventIndex = 0;
+
+// ─────────────────────────────────────────
+// RENDER METERS
+// ─────────────────────────────────────────
+function renderMeters() {
+  const { wellbeing: w, output: o, visibility: v } = state;
+  setMeter('wellbeing', w);
+  setMeter('output', o);
+  setMeter('visibility', v);
+}
+
+function setMeter(name, val) {
+  const fill = document.getElementById(`bar-${name}`);
+  const pct  = document.getElementById(`pct-${name}`);
+  fill.style.width = `${clamp(val)}%`;
+  pct.textContent  = `${Math.round(clamp(val))}%`;
+
+  // Danger coloring
+  if (val <= 15) {
+    fill.className = `meter-fill danger`;
+  } else {
+    fill.className = `meter-fill ${name}`;
+  }
+}
+
+// ─────────────────────────────────────────
+// PROGRESS DOTS
+// ─────────────────────────────────────────
+function renderDots() {
+  const container = document.getElementById('progress-dots');
+  container.innerHTML = '';
+  for (let i = 0; i < EVENTS_PER_QUARTER; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' +
+      (i < currentEventIndex ? ' done' : '') +
+      (i === currentEventIndex ? ' current' : '');
+    container.appendChild(d);
+  }
+}
+
+// ─────────────────────────────────────────
+// RENDER EVENT CARD
+// ─────────────────────────────────────────
+const TYPE_CLASSES = { task: 'badge-task', social: 'badge-social', random: 'badge-random', quiet: 'badge-quiet' };
+const TYPE_LABELS  = { task: 'Task', social: 'Social', random: 'Random Event', quiet: 'Quiet Moment' };
+
+function renderEvent(ev) {
+  // Status
+  document.getElementById('quarter-label').textContent = `Q${state.quarter}`;
+  document.getElementById('day-progress').textContent = `Day ${currentEventIndex + 1} of ${EVENTS_PER_QUARTER}`;
+
+  // Thumbnail
+  const thumb = document.getElementById('event-thumb');
+  thumb.style.background = ev.thumb.bg;
+  thumb.innerHTML = '';
+  (ev.thumb.shapes || []).forEach(s => {
+    const el = document.createElement('div');
+    el.className = 'thumb-shape';
+    el.style.cssText = `
+      width:${s.w}px; height:${s.h}px;
+      background:${s.color};
+      position:absolute; top:${s.top}px; left:${s.left}px;
+      border-radius:${s.radius || '4px'};
+    `;
+    thumb.appendChild(el);
+  });
+
+  // Badge + text
+  const badge = document.getElementById('event-badge');
+  badge.textContent = TYPE_LABELS[ev.type];
+  badge.className   = `event-type-badge ${TYPE_CLASSES[ev.type]}`;
+  document.getElementById('event-title').textContent = ev.title;
+  document.getElementById('event-desc').textContent  = ev.desc;
+
+  // Animate card
+  const card = document.getElementById('event-card');
+  card.classList.remove('visible');
+  requestAnimationFrame(() => { card.classList.add('visible'); });
+
+  // Choices
+  const container = document.getElementById('choices');
+  container.innerHTML = '';
+  ev.choices.forEach((c, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `
+      <span class="choice-label">${c.label}</span>
+      <span class="choice-effects">${effectTags(c.effects)}</span>
+    `;
+    btn.addEventListener('click', () => selectChoice(c));
+    container.appendChild(btn);
+  });
+}
+
+// ─────────────────────────────────────────
+// CHOICE SELECTION
+// ─────────────────────────────────────────
+function selectChoice(choice) {
+  // Disable all buttons immediately
+  document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+
+  // Apply effects
+  state.wellbeing  = clamp(state.wellbeing  + (choice.effects.w || 0));
+  state.output     = clamp(state.output     + (choice.effects.o || 0));
+  state.visibility = clamp(state.visibility + (choice.effects.v || 0));
+
+  renderMeters();
+
+  // Check crisis
+  const crisisMsg = checkCrisis();
+  if (crisisMsg) {
+    showBurnout(crisisMsg);
+    return;
+  }
+
+  // Advance
+  currentEventIndex++;
+  renderDots();
+
+  if (currentEventIndex >= EVENTS_PER_QUARTER) {
+    setTimeout(showPerformanceReview, 600);
+  } else {
+    setTimeout(() => renderEvent(quarterEvents[currentEventIndex]), 400);
+  }
+}
+
+// ─────────────────────────────────────────
+// CRISIS CHECK
+// ─────────────────────────────────────────
+function checkCrisis() {
+  if (state.wellbeing <= 0)  return { title:'BURNOUT', reason:'WELLBEING REACHED ZERO', sub:'The job demanded everything. You had nothing left.' };
+  if (state.output <= 0)     return { title:'TERMINATED', reason:'OUTPUT REACHED ZERO', sub:'Your work volume fell below acceptable thresholds. An HR meeting is scheduled.' };
+  if (state.visibility <= 0) return { title:'LAID OFF', reason:'VISIBILITY REACHED ZERO', sub:'The restructuring notice names your position. No one in leadership knew to protect you.' };
+  return null;
+}
+
+// ─────────────────────────────────────────
+// PERFORMANCE REVIEW
+// ─────────────────────────────────────────
+function showPerformanceReview() {
+  const { wellbeing: w, output: o, visibility: v, quarter: q } = state;
+
+  // Rating logic
+  let rating, ratingClass, sub;
+  const avg = (w + o + v) / 3;
+  const minMeter = Math.min(w, o, v);
+
+  if (avg >= 70 && minMeter >= 40) {
+    rating = '🌟 Exceeds Expectations';
+    ratingClass = 'exceeds';
+    sub = 'Strong quarter across the board. Leadership has noticed.';
+  } else if (avg >= 45 && minMeter >= 20) {
+    rating = '✓ Meets Expectations';
+    ratingClass = 'meets';
+    sub = 'An adequate quarter. You are neither in the spotlight nor under scrutiny.';
+  } else if (minMeter >= 10) {
+    rating = '⚠ Needs Improvement';
+    ratingClass = 'pip';
+    sub = 'One or more areas fell below expectations. Next quarter comes with closer observation.';
+  } else {
+    rating = '🚨 Performance Improvement Plan';
+    ratingClass = 'pip';
+    sub = 'Critical failure in at least one area. A PIP is issued. Next quarter is survival mode.';
+  }
+
+  document.getElementById('rev-q').textContent      = q;
+  document.getElementById('rev-rating').textContent = rating;
+  document.getElementById('rev-rating').className   = `review-rating ${ratingClass}`;
+  document.getElementById('rev-sub').textContent    = sub;
+  document.getElementById('rev-w').textContent      = `${Math.round(w)}%`;
+  document.getElementById('rev-o').textContent      = `${Math.round(o)}%`;
+  document.getElementById('rev-v').textContent      = `${Math.round(v)}%`;
+
+  const nextQ = q + 1;
+  if (nextQ > MAX_QUARTERS) {
+    document.getElementById('rev-btn').textContent = 'See Final Results';
+    document.getElementById('rev-btn').onclick = showFinalResults;
+  } else {
+    document.getElementById('rev-next-q').textContent = nextQ;
+    document.getElementById('rev-btn').onclick = startNextQuarter;
+  }
+
+  document.getElementById('review-overlay').classList.add('show');
+}
+
+// ─────────────────────────────────────────
+// BURNOUT / CRISIS
+// ─────────────────────────────────────────
+function showBurnout(crisis) {
+  document.getElementById('burnout-title').textContent  = crisis.title;
+  document.getElementById('burnout-reason').textContent = crisis.reason;
+  document.getElementById('burnout-sub').textContent    = crisis.sub;
+  document.getElementById('burnout-btn').onclick = restartGame;
+  document.getElementById('burnout-overlay').classList.add('show');
+}
+
+// ─────────────────────────────────────────
+// FINAL RESULTS (after Q4)
+// ─────────────────────────────────────────
+function showFinalResults() {
+  const { wellbeing: w, output: o, visibility: v } = state;
+
+  let title, ratingClass, sub;
+  const avg = (w + o + v) / 3;
+
+  if (avg >= 70) {
+    title = '🏆 You Escaped'; ratingClass = 'exceeds';
+    sub = 'Your record was strong enough to attract outside interest. A recruiter reached out. You take the call.';
+  } else if (avg >= 50) {
+    title = '☕ Still Here'; ratingClass = 'meets';
+    sub = 'Another year survived. The tower is still standing. So are you. For now.';
+  } else {
+    title = '📋 On Thin Ice'; ratingClass = 'pip';
+    sub = 'You made it through the year, but the next reorg might not be as kind.';
+  }
+
+  document.getElementById('rev-q').textContent      = 'Year-End';
+  document.getElementById('rev-rating').textContent = title;
+  document.getElementById('rev-rating').className   = `review-rating ${ratingClass}`;
+  document.getElementById('rev-sub').textContent    = sub;
+  document.getElementById('rev-w').textContent      = `${Math.round(w)}%`;
+  document.getElementById('rev-o').textContent      = `${Math.round(o)}%`;
+  document.getElementById('rev-v').textContent      = `${Math.round(v)}%`;
+  document.getElementById('rev-btn').textContent    = 'Play Again';
+  document.getElementById('rev-btn').onclick = restartGame;
+
+  document.querySelector('.review-heading').textContent = 'Year-End Review';
+  document.getElementById('review-overlay').classList.add('show');
+}
+
+// ─────────────────────────────────────────
+// NEXT QUARTER
+// ─────────────────────────────────────────
+function startNextQuarter() {
+  document.getElementById('review-overlay').classList.remove('show');
+
+  state.quarter++;
+  currentEventIndex = 0;
+  quarterEvents = buildQuarterEvents();
+
+  // Slight difficulty ramp — visibility decays each quarter (harder to maintain)
+  state.visibility = clamp(state.visibility - 5);
+
+  renderMeters();
+  renderDots();
+
+  setTimeout(() => renderEvent(quarterEvents[0]), 300);
+}
+
+// ─────────────────────────────────────────
+// RESTART
+// ─────────────────────────────────────────
+function restartGame() {
+  document.getElementById('burnout-overlay').classList.remove('show');
+  document.getElementById('review-overlay').classList.remove('show');
+  initGame();
+}
+
+// ─────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────
+function initGame() {
+  state = { quarter: 1, day: 0, wellbeing: 70, output: 50, visibility: 40 };
+  currentEventIndex = 0;
+  quarterEvents = buildQuarterEvents();
+
+  renderMeters();
+  renderDots();
+  renderEvent(quarterEvents[0]);
+}
+
+initGame();
+</script>
+</body>
+</html>

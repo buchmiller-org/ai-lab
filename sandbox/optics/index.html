@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optics — Prototype Index</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;500;600&display=swap">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0a0a12;
+      color: #c8c8e0;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      padding: 48px 32px 80px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    a { color: inherit; }
+    .back { font-size: 12px; color: #444466; text-decoration: none; display: block; margin-bottom: 32px; }
+    .back:hover { color: #888899; }
+    h1 { font-family: 'Orbitron', sans-serif; font-size: 28px; letter-spacing: 0.1em; color: #e0e0f0; margin-bottom: 4px; }
+    .subtitle { font-size: 13px; color: #444466; margin-bottom: 40px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+    /* ── Prototypes ── */
+    .proto-list { margin-bottom: 56px; }
+    .proto { border: 1px solid #1e1e30; border-radius: 8px; padding: 18px 22px; margin-bottom: 12px; }
+    .proto-meta { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #333355; margin-bottom: 6px; }
+    .proto-link { font-family: 'Orbitron', sans-serif; font-size: 14px; color: #60a5fa; text-decoration: none; display: block; margin-bottom: 8px; }
+    .proto-link:hover { color: #93c5fd; text-decoration: underline; }
+    .proto-finding { font-size: 12px; color: #555577; line-height: 1.6; }
+    .proto-finding strong { color: #777799; }
+
+    /* ── Notes ── */
+    h2 { font-family: 'Orbitron', sans-serif; font-size: 12px; letter-spacing: 0.14em; color: #333355; text-transform: uppercase; margin-bottom: 20px; margin-top: 48px; }
+    .notes { display: flex; flex-direction: column; gap: 28px; }
+    .note-section h3 { font-size: 13px; font-weight: 600; color: #8888aa; margin-bottom: 10px; }
+    ul { padding-left: 18px; }
+    ul li { font-size: 12px; color: #555577; line-height: 1.7; margin-bottom: 2px; }
+    ul li strong { color: #7777aa; }
+    .tag { font-size: 10px; background: #1a1a2e; border: 1px solid #2a2a44; color: #555577; padding: 2px 6px; border-radius: 3px; letter-spacing: 0.06em; }
+  </style>
+</head>
+<body>
+
+<a class="back" href="../../">← Back to Sandbox</a>
+
+<h1>OPTICS</h1>
+<p class="subtitle">Game design prototypes — corporate satire / stealth puzzle</p>
+
+<div class="proto-list">
+
+  <div class="proto">
+    <div class="proto-meta">Prototype A</div>
+    <a class="proto-link" href="decision/">Decision Engine — Oregon Trail loop →</a>
+    <p class="proto-finding">
+      <strong>Finding:</strong> Decisions felt weightless — if a meter dropped, you just picked the option that raised it. No tension. The trilemma concept is sound but needs physical or time constraints to bite. Better as a <em>meta-layer between levels</em> than a standalone mechanic.
+    </p>
+  </div>
+
+  <div class="proto">
+    <div class="proto-meta">Prototype B</div>
+    <a class="proto-link" href="stealth/">Top-Down Office — free-roam stealth →</a>
+    <p class="proto-finding">
+      <strong>Finding:</strong> Immediately more alive than A — LOS-based danger creates real-time pressure. But without task urgency, there's no reason to take routing risks. Continuous slow meter drain is less dramatic than discrete events. Boss patrol being predictable was noted as a potential <em>feature</em>.
+    </p>
+  </div>
+
+  <div class="proto">
+    <div class="proto-meta">Prototype C</div>
+    <a class="proto-link" href="puzzle/">Puzzle Level — fixed patrol + timed tasks →</a>
+    <p class="proto-finding">
+      <strong>Finding:</strong> Visible patrol route + task deadlines moved it toward a puzzle feel. Closer to the right direction but not yet challenging or interesting enough. The open floor means the boss is always avoidable; task sequences weren't tight enough to force hard decisions.
+    </p>
+  </div>
+
+</div>
+
+<h2>Design Observations &amp; Directions</h2>
+
+<div class="notes">
+
+  <div class="note-section">
+    <h3>What's not working (yet)</h3>
+    <ul>
+      <li><strong>Open floor = easy avoidance.</strong> The office needs walls, cubicle clusters, and narrow corridors that force routing through dangerous zones. A smart LOS design does nothing if the player can always walk around it.</li>
+      <li><strong>One slow boss = one safe path.</strong> A single predictable watcher always leaves a safe side. Two overlapping patrol cones that leave only brief windows is where actual dilemmas form.</li>
+      <li><strong>Prototypes lacked a "no good option" moment.</strong> The best puzzle games force you to choose between two bad options. None of the three prototypes achieved this.</li>
+    </ul>
+  </div>
+
+  <div class="note-section">
+    <h3>What is working</h3>
+    <ul>
+      <li><strong>Discrete penalties beat continuous drain.</strong> The one-time Visibility hit on entering idle state (Prototype C) was more impactful than slow meter bleed. Punishment should feel like an event, not erosion.</li>
+      <li><strong>The trilemma (W/O/V) has good bones.</strong> Wellbeing vs. Output vs. Visibility genuinely pull in different directions; the issue is execution, not concept.</li>
+      <li><strong>The patrol path visual is a good decision.</strong> Showing the route explicitly makes it a planning game, not a reaction game — which fits the "puzzle" framing better.</li>
+    </ul>
+  </div>
+
+  <div class="note-section">
+    <h3>Promising directions forward</h3>
+    <ul>
+      <li><strong>Real office geometry.</strong> Cubicle walls, conference room glass, narrow hallways. The layout itself does the design work of creating chokepoints.</li>
+      <li><strong>Two-boss choreography.</strong> Two patrollers with overlapping cones create brief safe windows that the player must exploit. Timing the crossing becomes the core skill.</li>
+      <li><strong>Task interdependency.</strong> Require gathering two items before delivering (e.g., pick up the file AND the signature, then deliver). Adds route planning depth without adding new mechanics.</li>
+      <li><strong>The meta-layer makes level modifiers, not just stat swings.</strong> Decision cards between levels should change the level itself — "VP doing floor walks" adds a second watcher, "All-hands today" blocks a corridor route — so decisions have spatial consequences.</li>
+      <li><strong>Clocks not meters.</strong> Replace slow-draining wellbeing with a per-task time budget visible as a countdown. Fail a task = permanent scar (a warning marker visible in the review). Makes each moment legible.</li>
+      <li><strong>Playtest the visual direction of "Hitman lite."</strong> The best reference might be early Hitman: a small space, a learnable patrol, and a goal that requires violating the patrol zone at least once. Office-themed.</li>
+    </ul>
+  </div>
+
+</div>
+
+</body>
+</html>

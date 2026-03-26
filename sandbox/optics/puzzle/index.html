@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optics — Puzzle Level Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0a0a12;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+      font-family: 'Inter', sans-serif;
+      color: #e0e0f0;
+    }
+    .page-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 12px;
+      width: 940px;
+    }
+    h1 { font-family: 'Orbitron', sans-serif; font-size: 20px; letter-spacing: 0.1em; }
+    .proto-badge {
+      font-size: 11px; color: #666688; background: #1a1a28;
+      border: 1px solid #2a2a40; padding: 2px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    #game-container canvas { display: block; border-radius: 8px; }
+    a.back { font-size: 12px; color: #555577; text-decoration: none; margin-bottom: 10px; display: block; width: 940px; }
+    a.back:hover { color: #aaa; }
+    .controls-hint {
+      margin-top: 10px; font-size: 11px; color: #444466; width: 940px;
+      display: flex; gap: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<a class="back" href="../">← Back to Optics</a>
+<div class="page-header">
+  <h1>OPTICS</h1>
+  <span class="proto-badge">Prototype C — Puzzle Level</span>
+</div>
+<div id="game-container"></div>
+<div class="controls-hint">
+  <span>WASD / Arrow keys — move</span>
+  <span>Stand still near a task node to pick up (2s)</span>
+  <span>Return to Your Desk to deliver (2s)</span>
+  <span>Dashed line = boss patrol route</span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════════════
+const GW = 940, GH = 580;
+const PLAYER_SPEED   = 170;
+const BOSS_SPEED     = 72;
+const LOS_RANGE      = 230;
+const LOS_HALF_ANG   = 0.50;   // ~57° wide cone
+const STATION_RADIUS = 50;
+const STAND_TIME     = 1.8;    // seconds to pick up or deliver
+const LEVEL_DURATION = 125;    // seconds
+
+// Meter drain/gain rates (per second)
+const R = {
+  los_busy_vis : +4,
+  los_busy_wb  : -2,
+  los_idle_vis : -10,
+  los_idle_wb  : -6,
+  break_wb     : +7,
+  task_output  : +20,
+  task_fail_op : -14,
+  caught_idle_pen: -10,  // one-time visibility hit on entering idle state
+};
+
+// ═══════════════════════════════════════════════════════
+//  LEVEL DATA
+// ═══════════════════════════════════════════════════════
+
+// Work stations
+const STATIONS = [
+  { id: 'desk',       x: 170, y: 290, w: 84, h: 50, label: 'Your Desk',  delivery: true,  col: 0x2d3a5a, stroke: 0x4455aa },
+  { id: 'printer',   x: 790, y: 120, w: 68, h: 46, label: 'Printer',    delivery: false, col: 0x2a1d4a, stroke: 0x7733cc },
+  { id: 'whiteboard',x: 470, y: 118, w: 96, h: 34, label: 'Whiteboard', delivery: false, col: 0x1c3a2a, stroke: 0x33aa66 },
+  { id: 'colleague', x: 730, y: 450, w: 84, h: 50, label: 'Colleague',  delivery: false, col: 0x3a1e1e, stroke: 0xaa4422 },
+  { id: 'filing',    x: 460, y: 456, w: 68, h: 50, label: 'Filing',     delivery: false, col: 0x1e2a3a, stroke: 0x3366aa },
+];
+
+// Break room
+const BRK = { x: 108, y: 473, w: 136, h: 86 };
+
+// Boss patrol waypoints — fixed loop. waitMs = pause at this point.
+const PATROL = [
+  { x: 470, y: 240, waitMs:    0 },  // 0: center
+  { x: 790, y: 130, waitMs: 3000 },  // 1: parks near printer ← key chokepoint
+  { x: 800, y: 370, waitMs:    0 },  // 2: right-mid
+  { x: 590, y: 460, waitMs: 1500 },  // 3: near filing/colleague
+  { x: 300, y: 450, waitMs:    0 },  // 4: lower-left
+  { x: 170, y: 290, waitMs: 1800 },  // 5: stops NEAR player desk ← pressure point
+  { x: 330, y: 130, waitMs:    0 },  // 6: upper-left
+];
+// Approx cycle: ~30s
+
+// Predetermined task sequence — spawnAt in seconds from level start
+// Designed so some tasks force LOS crossings or timing decisions
+const TASK_SEQ = [
+  { id:'t1', spawnAt:  4, station:'colleague',  deadline: 24, note:'Easy intro — boss is far right' },
+  { id:'t2', spawnAt: 26, station:'printer',    deadline: 20, note:'Boss parks at printer — must time it' },
+  { id:'t3', spawnAt: 47, station:'whiteboard', deadline: 14, note:'Short deadline — boss crosses center' },
+  { id:'t4', spawnAt: 63, station:'filing',     deadline: 22, note:'Boss near desk — risky delivery' },
+  { id:'t5', spawnAt: 80, station:'printer',    deadline: 16, note:'Boss at printer again' },
+  { id:'t6', spawnAt: 96, station:'colleague',  deadline: 12, note:'Very short — must cut through' },
+];
+
+// ═══════════════════════════════════════════════════════
+//  BOOT SCENE
+// ═══════════════════════════════════════════════════════
+class BootScene extends Phaser.Scene {
+  constructor() { super('Boot'); }
+  create() {
+    let g = this.make.graphics({ add:false });
+    g.fillStyle(0x00c8ff); g.fillRect(0,0,20,20);
+    g.generateTexture('player',20,20); g.destroy();
+    g = this.make.graphics({ add:false });
+    g.fillStyle(0xff8c00); g.fillRect(0,0,20,26);
+    g.generateTexture('boss',20,26); g.destroy();
+    this.scene.start('Game');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  GAME SCENE
+// ═══════════════════════════════════════════════════════
+class GameScene extends Phaser.Scene {
+  constructor() { super('Game'); }
+
+  init() {
+    this.wellbeing  = 85;
+    this.output     = 35;
+    this.visibility = 25;
+    this.elapsed    = 0;
+    this.gameOver   = false;
+
+    // Boss patrol state
+    this.patrolIdx  = 0;
+    this.patrolWait = 0;
+    this.bossFacing = 0;
+
+    // Interaction
+    this.holding    = false;   // player carrying a task
+    this.standTimer = 0;
+    this.standMode  = null;    // 'pickup'|'deliver'
+    this.standStation = null;
+
+    // Task tracking
+    this.taskStates = {};      // id → 'pending'|'active'|'held'|'delivered'|'failed'
+    this.taskTimers = {};      // id → remaining deadline seconds
+    this.taskObjs   = {};      // id → { gfx, ring, lbl }
+    TASK_SEQ.forEach(t => {
+      this.taskStates[t.id] = 'pending';
+      this.taskTimers[t.id] = t.deadline;
+    });
+
+    // LOS state tracking (for one-time caught penalty)
+    this.wasIdleInLOS = false;
+  }
+
+  create() {
+    // ── Background ──
+    this.add.rectangle(GW/2, GH/2, GW, GH, 0x11111e);
+
+    // ── Break room ──
+    this.add.rectangle(BRK.x, BRK.y, BRK.w, BRK.h, 0x081508).setStrokeStyle(2, 0x1e4a1e);
+    this.add.text(BRK.x, BRK.y - BRK.h/2 + 10, 'BREAK ROOM', {
+      fontFamily:'Orbitron', fontSize:'7px', color:'#1e4a1e',
+    }).setOrigin(0.5, 0);
+
+    // ── Patrol path (static dashed route drawn once) ──
+    this.drawPatrolPath();
+
+    // ── Stations ──
+    this.stationMap = {};
+    STATIONS.forEach(s => {
+      this.add.rectangle(s.x, s.y, s.w, s.h, s.col).setStrokeStyle(2, s.stroke);
+      this.add.text(s.x, s.y + s.h/2 + 7, s.label, {
+        fontFamily:'Inter', fontSize:'9px', color:'#667788',
+      }).setOrigin(0.5, 0);
+      this.stationMap[s.id] = s;
+    });
+
+    // ── Walls ──
+    const W = 14;
+    [[GW/2,W/2,GW,W],[GW/2,GH-W/2,GW,W],[W/2,GH/2,W,GH],[GW-W/2,GH/2,W,GH]]
+      .forEach(([x,y,w,h]) => this.add.rectangle(x,y,w,h,0x333348));
+
+    // ── LOS graphics ──
+    this.losGfx     = this.add.graphics().setDepth(4).setAlpha(0.2);
+    this.losEdge    = this.add.graphics().setDepth(5).setAlpha(0.55);
+
+    // ── Boss ──
+    this.boss = this.physics.add.sprite(PATROL[0].x, PATROL[0].y, 'boss');
+    this.boss.setDepth(8).setCollideWorldBounds(true).setTint(0xff8c00);
+    this.bossLabel = this.add.text(0, 0, '👔', { fontSize:'14px' }).setDepth(9).setOrigin(0.5);
+
+    // Next-waypoint indicator (faint dot)
+    this.nextWpDot = this.add.graphics().setDepth(3).setAlpha(0.35);
+
+    // ── Player ──
+    this.player = this.physics.add.sprite(170, 290, 'player');
+    this.player.setDepth(10).setCollideWorldBounds(true).setTint(0x00c8ff);
+
+    // Stand progress ring
+    this.standGfx = this.add.graphics().setDepth(15);
+    this.standLbl = this.add.text(0,0,'',{
+      fontFamily:'Orbitron', fontSize:'9px', color:'#fbbf24',
+    }).setDepth(16).setOrigin(0.5,1).setVisible(false);
+
+    // ── HUD ──
+    this.createHUD();
+
+    // ── Status text ──
+    this.statusText = this.add.text(GW/2, GH-20, '', {
+      fontFamily:'Orbitron', fontSize:'10px', color:'#ffea00', align:'center',
+    }).setOrigin(0.5).setDepth(20);
+
+    // ── Controls ──
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.wasd    = this.input.keyboard.addKeys({ up:'W', down:'S', left:'A', right:'D' });
+  }
+
+  // ── Patrol path visual ──────────────────────────────
+  drawPatrolPath() {
+    const g = this.add.graphics().setAlpha(0.18).setDepth(1);
+    g.lineStyle(1, 0x8888aa, 1);
+    for (let i = 0; i < PATROL.length; i++) {
+      const a = PATROL[i];
+      const b = PATROL[(i+1) % PATROL.length];
+      // Dashed line using dots
+      const dx = b.x-a.x, dy = b.y-a.y;
+      const len = Math.sqrt(dx*dx+dy*dy);
+      const steps = Math.floor(len/14);
+      for (let j = 0; j <= steps; j++) {
+        if (j % 2 === 0) {
+          g.fillStyle(0x8888aa, 1);
+          g.fillCircle(a.x+dx*(j/steps), a.y+dy*(j/steps), 2);
+        }
+      }
+    }
+    // Waypoint markers
+    PATROL.forEach((pt, i) => {
+      g.lineStyle(1, 0xaaaacc, 1);
+      g.strokeCircle(pt.x, pt.y, 7);
+      if (pt.waitMs > 0) {
+        // Highlighted stop point
+        g.fillStyle(0xffaa44, 0.4);
+        g.fillCircle(pt.x, pt.y, 9);
+      }
+    });
+  }
+
+  // ── HUD ────────────────────────────────────────────
+  createHUD() {
+    // top bar bg
+    this.add.rectangle(GW/2, 16, GW-32, 32, 0x0d0d1a, 0.95)
+      .setStrokeStyle(1, 0x222238).setDepth(18);
+
+    const mkBar = (x, label, col, id) => {
+      this.add.text(x-58, 16, label, {
+        fontFamily:'Orbitron', fontSize:'7px', color: col,
+      }).setOrigin(0,0.5).setDepth(20);
+      const track = this.add.rectangle(x+28, 16, 110, 7, 0x111122).setOrigin(0,0.5).setDepth(20);
+      const fill  = this.add.rectangle(x+28, 16, 110, 7,
+        Phaser.Display.Color.HexStringToColor(col).color).setOrigin(0,0.5).setDepth(20);
+      const pct   = this.add.text(x+144, 16, '80%', {
+        fontFamily:'Inter', fontSize:'8px', color:'#888899',
+      }).setOrigin(0,0.5).setDepth(20);
+      this[`${id}Fill`]=fill; this[`${id}Pct`]=pct;
+    };
+    mkBar(68,  'WELLBEING ', '#4ade80', 'wb');
+    mkBar(320, 'OUTPUT    ', '#60a5fa', 'out');
+    mkBar(572, 'VISIBILITY', '#f59e0b', 'vis');
+
+    // Clock + task tracker
+    this.clockTxt = this.add.text(GW-52, 16, '0:00', {
+      fontFamily:'Orbitron', fontSize:'9px', color:'#555577',
+    }).setOrigin(0.5).setDepth(20);
+
+    // Task icons row along bottom of viewport
+    this.taskIcons = {};
+    const iconY = GH - 38;
+    this.add.rectangle(GW/2, iconY, GW-32, 28, 0x0d0d1a, 0.9)
+      .setStrokeStyle(1, 0x222238).setDepth(18);
+    this.add.text(26, iconY, 'TASKS:', {
+      fontFamily:'Orbitron', fontSize:'7px', color:'#333355',
+    }).setOrigin(0,0.5).setDepth(20);
+    TASK_SEQ.forEach((t, i) => {
+      const x = 90 + i * 140;
+      const bg = this.add.rectangle(x, iconY, 128, 20, 0x1a1a2e).setOrigin(0,0.5)
+        .setStrokeStyle(1, 0x2a2a44).setDepth(19);
+      const lbl = this.add.text(x+4, iconY, `T${i+1}: ${STATIONS.find(s=>s.id===t.station)?.label}`, {
+        fontFamily:'Inter', fontSize:'8px', color:'#445566',
+      }).setOrigin(0,0.5).setDepth(20);
+      const status = this.add.text(x+120, iconY, '○', {
+        fontFamily:'Inter', fontSize:'10px', color:'#333355',
+      }).setOrigin(1,0.5).setDepth(20);
+      this.taskIcons[t.id] = { bg, lbl, status };
+    });
+  }
+
+  updateHUD() {
+    const setBar = (fill, pct, val, col) => {
+      const v = Math.max(0, Math.min(100, val));
+      fill.width = 110*(v/100);
+      pct.setText(`${Math.round(v)}%`);
+      fill.setFillStyle(v < 18 ? 0xef4444 : Phaser.Display.Color.HexStringToColor(col).color);
+    };
+    setBar(this.wbFill,  this.wbPct,  this.wellbeing,  '#4ade80');
+    setBar(this.outFill, this.outPct, this.output,      '#60a5fa');
+    setBar(this.visFill, this.visPct, this.visibility,  '#f59e0b');
+
+    const rem = Math.max(0, LEVEL_DURATION - this.elapsed);
+    const mm = Math.floor(rem/60), ss = Math.floor(rem%60);
+    this.clockTxt.setText(`${mm}:${String(ss).padStart(2,'0')}`);
+    this.clockTxt.setColor(rem < 20 ? '#ef4444' : '#555577');
+
+    // Task icons
+    TASK_SEQ.forEach((t, i) => {
+      const state = this.taskStates[t.id];
+      const ic = this.taskIcons[t.id];
+      if (state === 'pending') {
+        ic.status.setText('○').setColor('#333355');
+        ic.lbl.setColor('#445566');
+        ic.bg.setFillStyle(0x1a1a2e);
+      } else if (state === 'active') {
+        const secsLeft = this.taskTimers[t.id];
+        const urgency  = secsLeft / t.deadline;
+        const col = urgency > 0.5 ? '#fbbf24' : urgency > 0.25 ? '#f97316' : '#ef4444';
+        ic.status.setText(`${Math.ceil(secsLeft)}s`).setColor(col);
+        ic.lbl.setColor('#aaaacc');
+        ic.bg.setFillStyle(0x1e1e30);
+      } else if (state === 'held') {
+        ic.status.setText('◈').setColor('#00c8ff');
+        ic.lbl.setColor('#00c8ff');
+        ic.bg.setFillStyle(0x101a2a);
+      } else if (state === 'delivered') {
+        ic.status.setText('✓').setColor('#4ade80');
+        ic.lbl.setColor('#2a5a3a');
+        ic.bg.setFillStyle(0x0a1a0e);
+      } else if (state === 'failed') {
+        ic.status.setText('✗').setColor('#ef4444');
+        ic.lbl.setColor('#5a2222');
+        ic.bg.setFillStyle(0x1a0a0a);
+      }
+    });
+  }
+
+  // ── LOS ────────────────────────────────────────────
+  isInLOS(x, y) {
+    const dx=x-this.boss.x, dy=y-this.boss.y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if (dist>LOS_RANGE) return false;
+    const ang = Math.atan2(dy,dx);
+    return Math.abs(Phaser.Math.Angle.Wrap(ang-this.bossFacing)) <= LOS_HALF_ANG;
+  }
+
+  drawLOS(col) {
+    this.losGfx.clear();
+    this.losEdge.clear();
+    this.losGfx.fillStyle(col,1);
+    this.losEdge.lineStyle(1.5, col, 1);
+    const bx=this.boss.x, by=this.boss.y;
+    const steps=24;
+    const startAng = this.bossFacing-LOS_HALF_ANG;
+    const endAng   = this.bossFacing+LOS_HALF_ANG;
+    this.losGfx.beginPath(); this.losGfx.moveTo(bx,by);
+    this.losEdge.beginPath(); this.losEdge.moveTo(bx,by);
+    for(let i=0;i<=steps;i++){
+      const a=startAng+(endAng-startAng)*i/steps;
+      const cx=bx+Math.cos(a)*LOS_RANGE, cy=by+Math.sin(a)*LOS_RANGE;
+      this.losGfx.lineTo(cx,cy); this.losEdge.lineTo(cx,cy);
+    }
+    this.losGfx.closePath(); this.losGfx.fillPath();
+    this.losEdge.closePath(); this.losEdge.strokePath();
+  }
+
+  // ── Boss patrol ─────────────────────────────────────
+  updateBoss(dt) {
+    const dst = PATROL[this.patrolIdx];
+    if (this.patrolWait > 0) {
+      this.patrolWait -= dt;
+      this.boss.setVelocity(0,0);
+      if (this.patrolWait<=0) {
+        this.patrolIdx = (this.patrolIdx+1) % PATROL.length;
+      }
+      return;
+    }
+    const dx=dst.x-this.boss.x, dy=dst.y-this.boss.y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<8){
+      this.boss.setVelocity(0,0);
+      this.patrolWait = dst.waitMs/1000;
+      if(this.patrolWait<=0) this.patrolIdx=(this.patrolIdx+1)%PATROL.length;
+    } else {
+      this.boss.setVelocity((dx/dist)*BOSS_SPEED,(dy/dist)*BOSS_SPEED);
+      this.bossFacing=Math.atan2(dy,dx);
+    }
+    // Next waypoint dot
+    const nxt = PATROL[(this.patrolIdx+1)%PATROL.length];
+    this.nextWpDot.clear();
+    this.nextWpDot.fillStyle(0xff8c00,1);
+    this.nextWpDot.fillCircle(nxt.x, nxt.y, 4);
+  }
+
+  // ── Task system ─────────────────────────────────────
+  spawnTask(t) {
+    const s  = this.stationMap[t.station];
+    const ty = s.y - s.h/2 - 16;
+
+    const gfx  = this.add.graphics().setDepth(7);
+    const ring = this.add.graphics().setDepth(8);
+
+    // Task dot
+    gfx.fillStyle(0xfbbf24,1);
+    gfx.fillCircle(s.x, ty, 7);
+
+    // Task label
+    const lbl = this.add.text(s.x, ty-14, '!', {
+      fontFamily:'Orbitron', fontSize:'13px', color:'#fbbf24',
+    }).setOrigin(0.5).setDepth(9);
+
+    this.tweens.add({
+      targets:[gfx,lbl], scaleX:1.2, scaleY:1.2,
+      yoyo:true, repeat:-1, duration:500,
+    });
+
+    this.taskObjs[t.id] = { gfx, ring, lbl, ty };
+    this.taskStates[t.id] = 'active';
+    this.taskTimers[t.id] = t.deadline;
+
+    this.floatText(s.x, ty-20, `Task: ${s.label}`, '#fbbf24');
+  }
+
+  updateTasks(dt) {
+    TASK_SEQ.forEach(t => {
+      const state = this.taskStates[t.id];
+
+      // Spawn
+      if (state === 'pending' && this.elapsed >= t.spawnAt) {
+        this.spawnTask(t);
+        return;
+      }
+
+      // Countdown
+      if (state === 'active') {
+        this.taskTimers[t.id] -= dt;
+        const s  = this.stationMap[t.station];
+        const objs = this.taskObjs[t.id];
+        if (!objs) return;
+        const ty = objs.ty;
+
+        // Draw countdown arc
+        const frac = Math.max(0, this.taskTimers[t.id] / t.deadline);
+        objs.ring.clear();
+        const arcCol = frac > 0.5 ? 0xfbbf24 : frac > 0.25 ? 0xf97316 : 0xef4444;
+        objs.ring.lineStyle(3, arcCol, 0.9);
+        objs.ring.beginPath();
+        objs.ring.arc(s.x, ty, 13, -Math.PI/2, -Math.PI/2 + Math.PI*2*frac, false);
+        objs.ring.strokePath();
+        // Track bg
+        objs.ring.lineStyle(3, 0x333344, 0.5);
+        objs.ring.beginPath();
+        objs.ring.arc(s.x, ty, 13, -Math.PI/2+Math.PI*2*frac, -Math.PI/2+Math.PI*2, false);
+        objs.ring.strokePath();
+
+        if (this.taskTimers[t.id] <= 0) {
+          this.failTask(t);
+        }
+      }
+    });
+  }
+
+  failTask(t) {
+    this.taskStates[t.id] = 'failed';
+    const objs = this.taskObjs[t.id];
+    const s    = this.stationMap[t.station];
+    if (objs) {
+      this.tweens.killTweensOf(objs.gfx);
+      this.tweens.killTweensOf(objs.lbl);
+      objs.gfx.destroy(); objs.ring.destroy(); objs.lbl.destroy();
+      delete this.taskObjs[t.id];
+    }
+    this.output = Math.max(0, this.output + R.task_fail_op);
+    this.floatText(s.x, s.y-30, `ESCALATED  ${R.task_fail_op} O`, '#ef4444');
+    this.cameras.main.flash(250, 180, 20, 20, true);
+  }
+
+  completeTask(t) {
+    this.taskStates[t.id] = 'delivered';
+    this.output = Math.min(100, this.output + R.task_output);
+    this.floatText(170, 260, `+${R.task_output} Output`, '#60a5fa');
+  }
+
+  // ── Stand interaction ────────────────────────────────
+  updateStand(dt) {
+    const px=this.player.x, py=this.player.y;
+    const spd=Math.sqrt(this.player.body.velocity.x**2+this.player.body.velocity.y**2);
+    this.standGfx.clear();
+    this.standLbl.setVisible(false);
+
+    // Find nearest active task station
+    const nearTask = TASK_SEQ.find(t =>
+      this.taskStates[t.id] === 'active' &&
+      Phaser.Math.Distance.Between(px,py, this.stationMap[t.station].x, this.stationMap[t.station].y) < STATION_RADIUS
+    );
+    const atDesk = Phaser.Math.Distance.Between(px,py,170,290) < STATION_RADIUS;
+
+    if (!this.holding && nearTask && spd < 30) {
+      // Pickup
+      if (this.standMode!=='pickup' || this.standStation!==nearTask.id) {
+        this.standMode='pickup'; this.standStation=nearTask.id; this.standTimer=0;
+      }
+      this.standTimer+=dt;
+      this.drawStandRing(px, py, this.standTimer/STAND_TIME, '#fbbf24');
+      this.standLbl.setText('PICK UP').setVisible(true).setPosition(px, py-26);
+      if(this.standTimer>=STAND_TIME){
+        // Pickup
+        this.holding=true;
+        this.player.setTint(0xfbbf24);
+        const objs=this.taskObjs[nearTask.id];
+        if(objs){
+          this.tweens.killTweensOf(objs.gfx);
+          this.tweens.killTweensOf(objs.lbl);
+          objs.gfx.destroy(); objs.ring.destroy(); objs.lbl.destroy();
+          delete this.taskObjs[nearTask.id];
+        }
+        this.taskStates[nearTask.id]='held';
+        this.heldTaskId=nearTask.id;
+        this.standTimer=0; this.standMode=null; this.standStation=null;
+        this.floatText(px, py-20, 'Picked up!', '#fbbf24');
+      }
+    } else if(this.holding && atDesk && spd < 30) {
+      // Deliver
+      if(this.standMode!=='deliver'){ this.standMode='deliver'; this.standTimer=0; }
+      this.standTimer+=dt;
+      this.drawStandRing(px, py, this.standTimer/STAND_TIME, '#60a5fa');
+      this.standLbl.setText('DELIVER').setVisible(true).setPosition(px, py-26);
+      if(this.standTimer>=STAND_TIME){
+        const t=TASK_SEQ.find(t=>t.id===this.heldTaskId);
+        this.completeTask(t);
+        this.holding=false;
+        this.heldTaskId=null;
+        this.player.setTint(0x00c8ff);
+        this.standTimer=0; this.standMode=null;
+        // Check if all tasks done
+        this.checkAllDone();
+      }
+    } else {
+      this.standMode=null; this.standStation=null; this.standTimer=0;
+    }
+  }
+
+  drawStandRing(x, y, t, col){
+    const c=Phaser.Display.Color.HexStringToColor(col).color;
+    this.standGfx.lineStyle(3,c,0.35); this.standGfx.strokeCircle(x,y,16);
+    this.standGfx.lineStyle(3,c,1);
+    this.standGfx.beginPath();
+    this.standGfx.arc(x,y,16,-Math.PI/2,-Math.PI/2+Math.PI*2*Math.min(t,1),false);
+    this.standGfx.strokePath();
+  }
+
+  // ── Proximity helpers ────────────────────────────────
+  isNearWorkStation(px, py) {
+    return STATIONS.some(s => !s.delivery &&
+      Phaser.Math.Distance.Between(px,py,s.x,s.y) < STATION_RADIUS
+    ) || Phaser.Math.Distance.Between(px,py,170,290) < STATION_RADIUS; // desk always counts
+  }
+
+  inBreakRoom(px, py) {
+    return px>=BRK.x-BRK.w/2 && px<=BRK.x+BRK.w/2 && py>=BRK.y-BRK.h/2 && py<=BRK.y+BRK.h/2;
+  }
+
+  // ── Check all tasks finished ─────────────────────────
+  checkAllDone() {
+    const allSettled = TASK_SEQ.every(t =>
+      this.taskStates[t.id]==='delivered' || this.taskStates[t.id]==='failed'
+    );
+    if(allSettled) this.endLevel();
+  }
+
+  // ── Floating text ────────────────────────────────────
+  floatText(x, y, msg, col){
+    const t=this.add.text(x,y,msg,{
+      fontFamily:'Inter', fontSize:'11px', color:col, fontStyle:'bold',
+    }).setOrigin(0.5).setDepth(30);
+    this.tweens.add({ targets:t, y:t.y-30, alpha:0, duration:1100, onComplete:()=>t.destroy() });
+  }
+
+  // ── Crisis check ─────────────────────────────────────
+  checkCrisis() {
+    if(this.wellbeing<=0)  return { title:'BURNOUT',    sub:'The pressure finally broke you.' };
+    if(this.output<=0)     return { title:'FIRED',      sub:'Your deliverables fell below acceptable levels.' };
+    if(this.visibility<=0) return { title:'LAID OFF',   sub:'No one knew your name when cuts came.' };
+    return null;
+  }
+
+  // ── End level ─────────────────────────────────────────
+  endLevel() {
+    if(this.gameOver) return;
+    this.gameOver=true;
+    this.player.setVelocity(0,0);
+    this.boss.setVelocity(0,0);
+
+    const done   = TASK_SEQ.filter(t=>this.taskStates[t.id]==='delivered').length;
+    const total  = TASK_SEQ.length;
+    const grade  = done===6?'A+':done===5?'A':done===4?'B':done===3?'C':done<=1?'F':'D';
+    const gradeColor = done>=5?'#4ade80':done>=3?'#fbbf24':'#ef4444';
+
+    this.add.rectangle(GW/2,GH/2,GW,GH,0,0.8).setDepth(50);
+    this.add.text(GW/2, GH/2-90, '— SHIFT COMPLETE —', {
+      fontFamily:'Orbitron', fontSize:'11px', color:'#555577', letterSpacing:12,
+    }).setOrigin(0.5).setDepth(51);
+    this.add.text(GW/2, GH/2-50, grade, {
+      fontFamily:'Orbitron', fontSize:'72px', color:gradeColor, fontStyle:'bold',
+    }).setOrigin(0.5).setDepth(51);
+    this.add.text(GW/2, GH/2+20, `${done} / ${total} tasks delivered`, {
+      fontFamily:'Inter', fontSize:'15px', color:'#888899',
+    }).setOrigin(0.5).setDepth(51);
+    this.add.text(GW/2, GH/2+46, `W: ${Math.round(this.wellbeing)}%   O: ${Math.round(this.output)}%   V: ${Math.round(this.visibility)}%`, {
+      fontFamily:'Orbitron', fontSize:'10px', color:'#444466',
+    }).setOrigin(0.5).setDepth(51);
+
+    const btn = this.add.text(GW/2, GH/2+96, 'TRY AGAIN', {
+      fontFamily:'Orbitron', fontSize:'12px', color:'#60a5fa',
+      padding:{x:18,y:8}, backgroundColor:'#111128',
+    }).setOrigin(0.5).setDepth(51).setInteractive({useHandCursor:true});
+    btn.on('pointerdown', ()=>this.scene.restart());
+  }
+
+  // ── Main update ──────────────────────────────────────
+  update(time, delta) {
+    if(this.gameOver) return;
+    const dt=delta/1000;
+    this.elapsed+=dt;
+
+    // Player movement
+    let vx=0, vy=0;
+    if(this.cursors.left.isDown  ||this.wasd.left.isDown)  vx=-1;
+    if(this.cursors.right.isDown ||this.wasd.right.isDown) vx=+1;
+    if(this.cursors.up.isDown    ||this.wasd.up.isDown)    vy=-1;
+    if(this.cursors.down.isDown  ||this.wasd.down.isDown)  vy=+1;
+    if(vx&&vy){vx*=0.707;vy*=0.707;}
+    this.player.setVelocity(vx*PLAYER_SPEED, vy*PLAYER_SPEED);
+
+    // Boss
+    this.updateBoss(dt);
+    this.bossLabel.setPosition(this.boss.x, this.boss.y-18);
+
+    // LOS evaluation
+    const px=this.player.x, py=this.player.y;
+    const inLOS   = this.isInLOS(px,py);
+    const nearWork= this.isNearWorkStation(px,py);
+    const inBreak = this.inBreakRoom(px,py);
+
+    let losCol = 0xffea00;
+    let status = '';
+
+    if(inLOS){
+      if(nearWork){
+        losCol = 0x44ff88;
+        this.visibility = Math.min(100,this.visibility+R.los_busy_vis*dt);
+        this.wellbeing  = Math.max(0, this.wellbeing +R.los_busy_wb*dt);
+        status = '👔 LOOKING BUSY';
+        this.wasIdleInLOS=false;
+      } else {
+        losCol = 0xff2244;
+        this.visibility = Math.max(0,this.visibility+R.los_idle_vis*dt);
+        this.wellbeing  = Math.max(0,this.wellbeing +R.los_idle_wb*dt);
+        status = '⚠  CAUGHT IDLE';
+        if(!this.wasIdleInLOS){
+          // One-time hit + flash on first frame entering idle state
+          this.visibility=Math.max(0,this.visibility+R.caught_idle_pen);
+          this.cameras.main.flash(220,200,30,30,true);
+          this.floatText(px,py-30,'CAUGHT!  −10 Vis','#ef4444');
+          this.wasIdleInLOS=true;
+        }
+      }
+      // Tint player
+      this.player.setTint(nearWork ? 0x88ffcc : (this.holding ? 0xffaaaa : 0xff4466));
+    } else {
+      this.wasIdleInLOS=false;
+      if(!this.holding) this.player.setTint(0x00c8ff);
+      if(inBreak){
+        this.wellbeing=Math.min(100,this.wellbeing+R.break_wb*dt);
+        status='☕ RECOVERING';
+      }
+    }
+
+    this.drawLOS(losCol);
+    this.statusText.setText(status);
+
+    // Tasks & interaction
+    this.updateTasks(dt);
+    this.updateStand(dt);
+    this.updateHUD();
+
+    // Crisis & timeout
+    const crisis=this.checkCrisis();
+    if(crisis){
+      this.gameOver=true;
+      this.player.setVelocity(0,0); this.boss.setVelocity(0,0);
+      this.add.rectangle(GW/2,GH/2,GW,GH,0,0.85).setDepth(50);
+      this.add.text(GW/2,GH/2-30,crisis.title,{fontFamily:'Orbitron',fontSize:'32px',color:'#ef4444'}).setOrigin(0.5).setDepth(51);
+      this.add.text(GW/2,GH/2+14,crisis.sub,{fontFamily:'Inter',fontSize:'13px',color:'#cc8888'}).setOrigin(0.5).setDepth(51);
+      const b=this.add.text(GW/2,GH/2+60,'TRY AGAIN',{fontFamily:'Orbitron',fontSize:'12px',color:'#60a5fa',padding:{x:18,y:8},backgroundColor:'#111128'})
+        .setOrigin(0.5).setDepth(51).setInteractive({useHandCursor:true});
+      b.on('pointerdown',()=>this.scene.restart());
+      return;
+    }
+    if(this.elapsed>=LEVEL_DURATION) this.endLevel();
+  }
+}
+
+new Phaser.Game({
+  type: Phaser.AUTO,
+  width: GW, height: GH,
+  parent: 'game-container',
+  backgroundColor: 0x11111e,
+  physics: { default:'arcade', arcade:{ gravity:{y:0}, debug:false } },
+  scene: [BootScene, GameScene],
+});
+</script>
+</body>
+</html>
