@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="description"
+    content="Asteroid Miner — a relaxing idle clicker where you extract rare minerals from deep space anomalies. Play free in your browser.">
+  <title>Asteroid Miner — Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Shared animated background -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="orb orb--1" aria-hidden="true"></div>
+  <div class="orb orb--2" aria-hidden="true"></div>
+
+  <div class="game-page">
+
+    <header class="arcade-header">
+      <a href="../" class="back-link" id="back-link">← Back to Arcade</a>
+      <h1 class="arcade-header__title arcade-header__title--gradient title-am">Asteroid Miner</h1>
+    </header>
+
+    <!-- Main Game Area -->
+    <div class="game-container" id="game-container">
+
+      <!-- Starfield Canvas (behind everything) -->
+      <canvas id="starfield-canvas" aria-hidden="true"></canvas>
+
+      <!-- Resource HUD -->
+      <div class="hud" id="hud">
+        <div class="hud__item">
+          <span class="hud__label">Credits</span>
+          <span class="hud__value" id="hud-credits">0</span>
+        </div>
+        <div class="hud__item">
+          <span class="hud__label">Depth</span>
+          <span class="hud__value" id="hud-depth">1</span>
+        </div>
+        <div class="hud__item">
+          <span class="hud__label">/sec</span>
+          <span class="hud__value" id="hud-cps">0</span>
+        </div>
+      </div>
+
+      <!-- Asteroid Click Area -->
+      <div class="asteroid-zone" id="asteroid-zone">
+        <div class="asteroid" id="asteroid">
+          <div class="asteroid__body" id="asteroid-body">
+            <div class="asteroid__crater asteroid__crater--1"></div>
+            <div class="asteroid__crater asteroid__crater--2"></div>
+            <div class="asteroid__crater asteroid__crater--3"></div>
+            <div class="asteroid__crater asteroid__crater--4"></div>
+          </div>
+          <div class="asteroid__glow" id="asteroid-glow"></div>
+        </div>
+        <div class="mineral-burst" id="mineral-burst" aria-hidden="true"></div>
+      </div>
+
+      <!-- Upgrade Panels -->
+      <div class="upgrades-panel" id="upgrades-panel">
+        <h2 class="upgrades-panel__title">Mining Operations</h2>
+        <div class="upgrades-list" id="upgrades-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Achievements Toast Area -->
+      <div class="toast-area" id="toast-area" aria-live="polite"></div>
+
+    </div>
+
+  </div>
+
+  <script src="game.js"></script>
+
+</body>
+
+</html>

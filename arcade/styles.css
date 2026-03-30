@@ -198,6 +198,10 @@ body {
   background-image: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-pink), var(--color-accent-purple));
 }
 
+.title-am {
+  background-image: linear-gradient(135deg, #f59e0b, var(--color-accent-purple), var(--color-accent-yellow));
+}
+
 /* Standard Back Link */
 .back-link {
   font-family: var(--font-display);

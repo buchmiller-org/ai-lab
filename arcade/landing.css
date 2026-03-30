@@ -183,6 +183,10 @@
   background: linear-gradient(135deg, var(--color-accent-orange), var(--color-accent-yellow));
 }
 
+.game-card--amber-purple::before {
+  background: linear-gradient(135deg, #f59e0b, var(--color-accent-purple));
+}
+
 /* Card glow shadow on hover */
 .game-card--purple-cyan:hover {
   box-shadow: 0 12px 50px rgba(168, 85, 247, 0.2), 0 4px 20px rgba(6, 214, 160, 0.15);
@@ -210,6 +214,10 @@
 
 .game-card--orange-yellow:hover {
   box-shadow: 0 12px 50px rgba(251, 146, 60, 0.15), 0 4px 20px rgba(250, 204, 21, 0.15);
+}
+
+.game-card--amber-purple:hover {
+  box-shadow: 0 12px 50px rgba(245, 158, 11, 0.15), 0 4px 20px rgba(168, 85, 247, 0.15);
 }
 
 /* Card Thumbnail Area */
@@ -249,6 +257,10 @@
 
 .game-card__thumb--grid {
   background: linear-gradient(160deg, #1f1208 0%, #2a1005 100%);
+}
+
+.game-card__thumb--asteroid {
+  background: linear-gradient(160deg, #1a0f28 0%, #12080a 100%);
 }
 
 /* Geometric shapes inside thumbnails */
@@ -829,6 +841,75 @@
 .thumb-shape--gb-4 { width: 13px; height: 28px; top: calc(50% + 1px); left: calc(50% - 29px); } /* Vert 2 */
 .thumb-shape--gb-5 { width: 28px; height: 13px; top: calc(50% + 31px); left: calc(50% - 14px); } /* Horiz 2 */
 
+/* Asteroid Miner shapes */
+.thumb-shape--am-rock {
+  width: 52px;
+  height: 52px;
+  border-radius: 44% 56% 48% 52% / 50% 44% 56% 50%;
+  background: radial-gradient(circle at 35% 30%, #5a5a6e, #2a2a3a 50%, #1a1a28 90%);
+  box-shadow:
+    inset -4px -3px 10px rgba(0, 0, 0, 0.6),
+    0 0 24px rgba(168, 85, 247, 0.25),
+    0 0 48px rgba(245, 158, 11, 0.1);
+  top: calc(50% - 26px);
+  left: calc(50% - 26px);
+  opacity: 1;
+}
+
+.thumb-shape--am-frag {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  opacity: 0.9;
+}
+
+.thumb-shape--am-frag-1 {
+  background: #f59e0b;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
+  top: calc(50% - 38px);
+  left: calc(50% + 12px);
+  animation: amOrbit 6s linear infinite;
+}
+
+.thumb-shape--am-frag-2 {
+  background: var(--color-accent-purple);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.8);
+  width: 5px;
+  height: 5px;
+  top: calc(50% + 30px);
+  left: calc(50% - 20px);
+  animation: amOrbit 8s linear -2s infinite;
+}
+
+.thumb-shape--am-frag-3 {
+  background: var(--color-accent-yellow);
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.7);
+  width: 4px;
+  height: 4px;
+  top: calc(50% + 5px);
+  left: calc(50% + 35px);
+  animation: amOrbit 7s linear -4s infinite;
+}
+
+.thumb-shape--am-pick {
+  font-size: 16px;
+  top: calc(50% - 8px);
+  left: calc(50% - 8px);
+  opacity: 0.8;
+  animation: amPickBob 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.5));
+}
+
+@keyframes amOrbit {
+  0% { transform: rotate(0deg) translateX(6px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(6px) rotate(-360deg); }
+}
+
+@keyframes amPickBob {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.05); }
+}
+
 /* Card Body */
 .game-card__body {
   padding: 24px;
@@ -908,6 +989,10 @@
 
 .game-card--orange-yellow:hover .game-card__cta {
   color: var(--color-accent-yellow);
+}
+
+.game-card--amber-purple:hover .game-card__cta {
+  color: #f59e0b;
 }
 
 .game-card__cta-arrow {
