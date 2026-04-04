@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="description"
+    content="Starfield Survivor — Dodge waves of cosmic debris in a bullet-hell survival challenge. How long can you last? Play free in your browser.">
+  <title>Starfield Survivor — Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Shared animated background -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="orb orb--1" aria-hidden="true"></div>
+  <div class="orb orb--2" aria-hidden="true"></div>
+
+  <div class="game-page">
+
+    <header class="arcade-header">
+      <a href="../" class="back-link" id="back-link">← Back to Arcade</a>
+      <h1 class="arcade-header__title arcade-header__title--gradient title-ss">Starfield Survivor</h1>
+    </header>
+
+    <!-- Game Container -->
+    <div class="game-container" id="game-container">
+      <canvas id="game-canvas"></canvas>
+
+      <!-- Title Overlay -->
+      <div class="screen screen--active" id="screen-title">
+        <div class="overlay__bg"></div>
+        <div class="overlay__content">
+          <div class="title-art" aria-hidden="true">
+            <div class="title-ship"></div>
+            <div class="title-debris title-debris--1"></div>
+            <div class="title-debris title-debris--2"></div>
+            <div class="title-debris title-debris--3"></div>
+            <div class="title-debris title-debris--4"></div>
+          </div>
+          <h2 class="overlay__title">Starfield Survivor</h2>
+          <p class="overlay__subtitle">Dodge waves of cosmic debris in a bullet-hell survival challenge.<br>How long can
+            you last?</p>
+          <button class="btn btn--primary" id="btn-start">Launch</button>
+          <div class="title-hints">
+            <span class="control-hint">Mouse / Touch / WASD to move</span>
+            <span class="control-hint">Collect power-ups to survive</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div class="screen" id="screen-gameover">
+        <div class="overlay__bg"></div>
+        <div class="overlay__content">
+          <h2 class="overlay__title overlay__title--fail">Hull Breached</h2>
+          <p class="overlay__subtitle">Your ship couldn't withstand the onslaught…</p>
+          <div class="gameover-stats">
+            <div class="stat-row"><span>Score</span><span id="go-score">0</span></div>
+            <div class="stat-row"><span>Time Survived</span><span id="go-time">0:00</span></div>
+            <div class="stat-row"><span>Near Misses</span><span id="go-graze">0</span></div>
+            <div class="stat-row stat-row--highlight"><span>Best Score</span><span id="go-high">0</span></div>
+          </div>
+          <button class="btn btn--primary" id="btn-retry">Try Again</button>
+        </div>
+      </div>
+
+    </div><!-- /game-container -->
+
+  </div><!-- /game-page -->
+
+  <!-- Game scripts (order: entities → renderer → game) -->
+  <script src="entities.js"></script>
+  <script src="renderer.js"></script>
+  <script src="game.js"></script>
+
+</body>
+
+</html>

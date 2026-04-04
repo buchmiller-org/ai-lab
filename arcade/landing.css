@@ -1263,6 +1263,131 @@
   100% { transform: translateY(-10px); filter: drop-shadow(0 0 20px rgba(6, 214, 160, 1)); }
 }
 
+/* Starfield Survivor thumbnail */
+.game-card__thumb--starfield {
+  background: linear-gradient(160deg, #060d1a 0%, #0a0818 100%);
+}
+
+.ss-preview {
+  position: absolute;
+  width: 120px;
+  height: 100%;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Ship — upward-pointing triangle */
+.thumb-shape--ss-ship {
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 24px solid #06d6a0;
+  filter: drop-shadow(0 0 8px rgba(6, 214, 160, 0.7));
+  position: absolute;
+  bottom: 50px;
+  left: calc(50% - 10px);
+  opacity: 0.9;
+  animation: ssShipBob 3s ease-in-out infinite;
+}
+
+.thumb-shape--ss-ship::after {
+  content: '';
+  position: absolute;
+  bottom: -24px;
+  left: -4px;
+  width: 8px;
+  height: 8px;
+  background: rgba(6, 214, 160, 0.4);
+  clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+  filter: blur(1px);
+}
+
+@keyframes ssShipBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* Debris dots — scattered with gentle drift */
+.thumb-shape--ss-debris {
+  border-radius: 50%;
+  opacity: 0.7;
+}
+
+.thumb-shape--ss-debris-1 {
+  width: 7px;
+  height: 7px;
+  background: #fb923c;
+  box-shadow: 0 0 8px rgba(251, 146, 60, 0.6);
+  top: 25px;
+  right: 10px;
+  animation: ssDebrisDrift 5s ease-in-out infinite;
+}
+
+.thumb-shape--ss-debris-2 {
+  width: 5px;
+  height: 5px;
+  background: #f472b6;
+  box-shadow: 0 0 8px rgba(244, 114, 182, 0.6);
+  top: 50px;
+  left: 5px;
+  animation: ssDebrisDrift 4s ease-in-out -1s infinite;
+}
+
+.thumb-shape--ss-debris-3 {
+  width: 4px;
+  height: 4px;
+  background: #a855f7;
+  box-shadow: 0 0 6px rgba(168, 85, 247, 0.6);
+  top: 80px;
+  right: 20px;
+  animation: ssDebrisDrift 4.5s ease-in-out -2s infinite;
+}
+
+.thumb-shape--ss-debris-4 {
+  width: 6px;
+  height: 6px;
+  background: #facc15;
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+  top: 35px;
+  left: 25px;
+  animation: ssDebrisDrift 3.5s ease-in-out -0.5s infinite;
+}
+
+.thumb-shape--ss-debris-5 {
+  width: 3px;
+  height: 3px;
+  background: #38bdf8;
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+  top: 110px;
+  left: 35px;
+  animation: ssDebrisDrift 5s ease-in-out -3s infinite;
+}
+
+@keyframes ssDebrisDrift {
+  0%, 100% { transform: translate(0, 0); opacity: 0.5; }
+  50% { transform: translate(-4px, 6px); opacity: 0.9; }
+}
+
+/* Expanding ring — represents pulse ring mechanic */
+.thumb-shape--ss-ring {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid rgba(56, 189, 248, 0.3);
+  position: absolute;
+  top: calc(50% - 25px);
+  left: calc(50% - 25px);
+  animation: ssRingPulse 3s ease-out infinite;
+  opacity: 0.5;
+}
+
+@keyframes ssRingPulse {
+  0% { transform: scale(0.4); opacity: 0.6; border-color: rgba(56, 189, 248, 0.5); }
+  100% { transform: scale(1.6); opacity: 0; border-color: rgba(56, 189, 248, 0); }
+}
+
 /* --- Game Ideas Section --- */
 .game-ideas {
   max-width: 800px;
