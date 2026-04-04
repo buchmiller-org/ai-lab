@@ -236,6 +236,14 @@
   box-shadow: 0 12px 50px rgba(56, 189, 248, 0.15), 0 4px 20px rgba(99, 102, 241, 0.15);
 }
 
+.game-card--emerald-cyan::before {
+  background: linear-gradient(135deg, #06d6a0, #38bdf8);
+}
+
+.game-card--emerald-cyan:hover {
+  box-shadow: 0 12px 50px rgba(6, 214, 160, 0.2), 0 4px 20px rgba(56, 189, 248, 0.15);
+}
+
 /* Card Thumbnail Area */
 .game-card__thumb {
   height: 180px;
@@ -285,6 +293,10 @@
 
 .game-card__thumb--glyph {
   background: linear-gradient(160deg, #0a0f28 0%, #0d1a2e 100%);
+}
+
+.game-card__thumb--tower-surge {
+  background: linear-gradient(160deg, #061a14 0%, #0a1e28 100%);
 }
 
 /* Geometric shapes inside thumbnails */
@@ -1110,6 +1122,98 @@
   50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
 }
 
+/* Tower Surge thumbnail shapes */
+.ts-preview {
+  position: absolute;
+  width: 140px;
+  height: 100%;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.thumb-shape--ts-tower {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  opacity: 0.9;
+  position: absolute;
+}
+
+.thumb-shape--ts-tower-1 {
+  background: #06d6a0;
+  box-shadow: 0 0 14px rgba(6, 214, 160, 0.7);
+  top: 50px;
+  left: 20px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  border-radius: 0;
+  animation: tsTowerPulse 3s ease-in-out infinite;
+}
+
+.thumb-shape--ts-tower-2 {
+  background: #facc15;
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.7);
+  top: 90px;
+  left: 55px;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  animation: tsTowerPulseRotate 3s ease-in-out -1s infinite;
+}
+
+.thumb-shape--ts-tower-3 {
+  background: #f472b6;
+  box-shadow: 0 0 14px rgba(244, 114, 182, 0.7);
+  top: 55px;
+  left: 90px;
+  border-radius: 50%;
+  animation: tsTowerPulse 3s ease-in-out -2s infinite;
+}
+
+.thumb-shape--ts-shield {
+  width: 50px;
+  height: 50px;
+  border: 2px solid rgba(6, 214, 160, 0.25);
+  border-radius: 50%;
+  position: absolute;
+  top: 56px;
+  left: 45px;
+  animation: tsShieldPulse 2.5s ease-in-out infinite;
+}
+
+.thumb-shape--ts-enemy {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+  position: absolute;
+  opacity: 0.7;
+}
+
+.thumb-shape--ts-enemy-1 { top: 40px; right: -5px; animation: tsEnemyDrift 4s ease-in-out infinite; }
+.thumb-shape--ts-enemy-2 { top: 85px; right: 5px; animation: tsEnemyDrift 4s ease-in-out -1.5s infinite; }
+.thumb-shape--ts-enemy-3 { top: 120px; right: -2px; animation: tsEnemyDrift 4s ease-in-out -3s infinite; }
+
+@keyframes tsTowerPulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.08); filter: brightness(1.3); }
+}
+
+@keyframes tsTowerPulseRotate {
+  0%, 100% { transform: rotate(45deg) scale(1); filter: brightness(1); }
+  50% { transform: rotate(45deg) scale(1.08); filter: brightness(1.3); }
+}
+
+@keyframes tsShieldPulse {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.08); opacity: 0.6; }
+}
+
+@keyframes tsEnemyDrift {
+  0%, 100% { transform: translateX(0); opacity: 0.5; }
+  50% { transform: translateX(-6px); opacity: 0.9; }
+}
+
 /* Card Body */
 .game-card__body {
   padding: 24px;
@@ -1201,6 +1305,10 @@
 
 .game-card--cyan-indigo:hover .game-card__cta {
   color: #38bdf8;
+}
+
+.game-card--emerald-cyan:hover .game-card__cta {
+  color: #06d6a0;
 }
 
 .game-card__cta-arrow {

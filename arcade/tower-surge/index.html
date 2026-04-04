@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="description"
+    content="Tower Surge — build and upgrade neon defense towers to hold off endless waves of glitch enemies. Play free in your browser.">
+  <title>Tower Surge — Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Shared animated background -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="orb orb--1" aria-hidden="true"></div>
+  <div class="orb orb--2" aria-hidden="true"></div>
+
+  <div class="game-page">
+
+    <header class="arcade-header">
+      <a href="../" class="back-link" id="back-link">← Back to Arcade</a>
+      <h1 class="arcade-header__title arcade-header__title--gradient title-ts">Tower Surge</h1>
+    </header>
+
+    <!-- HUD -->
+    <div class="hud" id="hud">
+      <div class="hud__item">
+        <span class="hud__label">Wave</span>
+        <span class="hud__value" id="hud-wave">0</span>
+      </div>
+      <div class="hud__item">
+        <span class="hud__label">Credits</span>
+        <span class="hud__value hud__value--credits" id="hud-credits">150</span>
+      </div>
+      <div class="hud__item">
+        <span class="hud__label">Core HP</span>
+        <span class="hud__value hud__value--hp" id="hud-hp">20</span>
+      </div>
+      <div class="hud__item">
+        <span class="hud__label">Score</span>
+        <span class="hud__value" id="hud-score">0</span>
+      </div>
+      <div class="hud__item">
+        <span class="hud__label">Best</span>
+        <span class="hud__value hud__value--best" id="hud-best">0</span>
+      </div>
+    </div>
+
+    <!-- Game Canvas -->
+    <div class="canvas-wrap">
+      <canvas id="game-canvas"></canvas>
+      <div class="wave-banner" id="wave-banner"></div>
+    </div>
+
+    <!-- Tower Selection Bar + Controls -->
+    <div class="tower-bar" id="tower-bar">
+      <button class="tower-btn" data-type="pulse" id="btn-tower-pulse">
+        <span class="tower-btn__icon"
+          style="background: linear-gradient(135deg, #06d6a0, #38bdf8); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); border-radius: 0;"></span>
+        <span class="tower-btn__name">Pulse</span>
+        <span class="tower-btn__cost">50 ¢</span>
+        <span class="tower-btn__key">1</span>
+      </button>
+      <button class="tower-btn" data-type="spark" id="btn-tower-spark">
+        <span class="tower-btn__icon"
+          style="background: linear-gradient(135deg, #facc15, #fb923c); border-radius: 2px; transform: rotate(45deg); width: 18px; height: 18px;"></span>
+        <span class="tower-btn__name">Spark</span>
+        <span class="tower-btn__cost">30 ¢</span>
+        <span class="tower-btn__key">2</span>
+      </button>
+      <button class="tower-btn" data-type="nova" id="btn-tower-nova">
+        <span class="tower-btn__icon"
+          style="background: linear-gradient(135deg, #f472b6, #a855f7); border-radius: 50%;"></span>
+        <span class="tower-btn__name">Nova</span>
+        <span class="tower-btn__cost">100 ¢</span>
+        <span class="tower-btn__key">3</span>
+      </button>
+
+      <!-- Inline control hints -->
+      <div class="control-hints-inline">
+        <span class="hint-chip">Click to place</span>
+        <span class="hint-chip">R-Click / Esc to cancel</span>
+      </div>
+
+      <button class="wave-btn" id="btn-next-wave" disabled>Send Wave</button>
+    </div>
+
+    <!-- Tower Info Panel -->
+    <div class="tower-info" id="tower-info" hidden>
+      <span class="tower-info__name" id="info-name">Pulse Tower</span>
+      <div class="tower-info__stats">
+        <div class="tower-info__stat" id="info-level-wrap">
+          <span class="tower-info__stat-label">Lvl</span>
+          <span class="tower-info__stat-value" id="info-level">1</span>
+        </div>
+        <div class="tower-info__stat">
+          <span class="tower-info__stat-label">Dmg</span>
+          <span class="tower-info__stat-value" id="info-dmg">18</span>
+        </div>
+        <div class="tower-info__stat">
+          <span class="tower-info__stat-label">Range</span>
+          <span class="tower-info__stat-value" id="info-range">3.0</span>
+        </div>
+        <div class="tower-info__stat">
+          <span class="tower-info__stat-label">Rate</span>
+          <span class="tower-info__stat-value" id="info-rate">1.2/s</span>
+        </div>
+      </div>
+      <div class="info-actions" id="info-actions">
+        <button class="btn-action btn-action--upgrade" id="btn-upgrade">Upgrade <span id="upgrade-cost">30</span>
+          ¢</button>
+        <button class="btn-action btn-action--sell" id="btn-sell">Sell <span id="sell-value">30</span> ¢</button>
+      </div>
+    </div>
+
+    <!-- Enemy Codex (collapsible) -->
+    <details class="enemy-codex" id="enemy-codex">
+      <summary class="enemy-codex__toggle">Enemy Intel ▸</summary>
+      <div class="enemy-codex__grid">
+        <div class="codex-entry">
+          <span class="codex-shape codex-shape--glitch"></span>
+          <div class="codex-info">
+            <span class="codex-name" style="color:#ef4444;">Glitch</span>
+            <span class="codex-desc">Balanced. Medium HP &amp; speed.</span>
+          </div>
+        </div>
+        <div class="codex-entry">
+          <span class="codex-shape codex-shape--swarm"></span>
+          <div class="codex-info">
+            <span class="codex-name" style="color:#fb923c;">Swarm</span>
+            <span class="codex-desc">Low HP, fast, comes in packs.</span>
+          </div>
+        </div>
+        <div class="codex-entry">
+          <span class="codex-shape codex-shape--titan"></span>
+          <div class="codex-info">
+            <span class="codex-name" style="color:#d946ef;">Titan</span>
+            <span class="codex-desc">High HP, slow, high reward.</span>
+          </div>
+        </div>
+        <div class="codex-entry">
+          <span class="codex-shape codex-shape--phantom"></span>
+          <div class="codex-info">
+            <span class="codex-name" style="color:#a855f7;">Phantom</span>
+            <span class="codex-desc">Medium HP, very fast.</span>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <!-- Title Screen -->
+    <div class="screen screen--active" id="screen-title">
+      <div class="overlay__bg"></div>
+      <div class="overlay__content title-screen">
+        <a href="../" class="overlay-back-link">← Back to Arcade</a>
+        <div class="title-art" aria-hidden="true">
+          <div class="title-tower title-tower--1"></div>
+          <div class="title-tower title-tower--2"></div>
+          <div class="title-tower title-tower--3"></div>
+          <div class="title-shield"></div>
+        </div>
+        <h2 class="overlay__title">Tower Surge</h2>
+        <p class="overlay__subtitle">Build neon defense towers.<br>Hold the line against waves of glitch enemies.</p>
+        <button class="btn--primary" id="btn-start">Deploy Defenses</button>
+        <div class="title-hints">
+          <span class="control-hint">Click to place towers</span>
+          <span class="control-hint">Keys 1-2-3 to select</span>
+          <span class="control-hint">Right-click to deselect</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div class="screen" id="screen-gameover">
+      <div class="overlay__bg"></div>
+      <div class="overlay__content">
+        <a href="../" class="overlay-back-link">← Back to Arcade</a>
+        <h2 class="overlay__title overlay__title--fail">Core Breach</h2>
+        <p class="overlay__subtitle">The glitch entities have overrun your defenses...</p>
+        <div class="gameover-stats">
+          <div class="stat-row"><span>Final Score</span><span id="go-score">0</span></div>
+          <div class="stat-row"><span>Waves Survived</span><span id="go-wave">0</span></div>
+          <div class="stat-row"><span>Enemies Destroyed</span><span id="go-kills">0</span></div>
+          <div class="stat-row"><span>Best Score</span><span id="go-best">0</span></div>
+        </div>
+        <button class="btn--primary" id="btn-retry">Reinitialize</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Game Scripts (order matters: map → entities → waves → renderer → game) -->
+  <script src="map.js"></script>
+  <script src="entities.js"></script>
+  <script src="waves.js"></script>
+  <script src="renderer.js"></script>
+  <script src="game.js"></script>
+
+</body>
+
+</html>
