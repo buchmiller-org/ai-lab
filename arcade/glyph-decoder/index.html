@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="description"
+    content="Glyph Decoder — crack alien symbol patterns before time runs out. A timed pattern-matching puzzle game. Play free in your browser.">
+  <title>Glyph Decoder — AI Games Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Shared animated background -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="orb orb--1" aria-hidden="true"></div>
+  <div class="orb orb--2" aria-hidden="true"></div>
+
+  <div class="game-page">
+
+    <header class="arcade-header">
+      <a href="../" class="back-link" id="back-link">← Back to Arcade</a>
+      <h1 class="arcade-header__title arcade-header__title--gradient title-gd2">Glyph Decoder</h1>
+    </header>
+
+    <!-- HUD -->
+    <div class="hud" id="hud">
+      <div class="hud__item">
+        <span class="hud__label">Level</span>
+        <span class="hud__value" id="hud-level">1</span>
+      </div>
+      <div class="hud__item">
+        <span class="hud__label">Score</span>
+        <span class="hud__value" id="hud-score">0</span>
+      </div>
+      <div class="hud__item">
+        <span class="hud__label">Streak</span>
+        <span class="hud__value" id="hud-streak">0</span>
+      </div>
+      <div class="hud__item">
+        <span class="hud__label">Best</span>
+        <span class="hud__value" id="hud-best">0</span>
+      </div>
+    </div>
+
+    <!-- Game Container -->
+    <div class="game-container" id="game-container">
+
+      <!-- Title Screen -->
+      <div class="screen screen--active" id="screen-title">
+        <div class="overlay__bg"></div>
+        <div class="overlay__content title-screen">
+          <div class="title-glyph-art" aria-hidden="true">
+            <div class="glyph-ring glyph-ring--outer"></div>
+            <div class="glyph-ring glyph-ring--inner"></div>
+            <div class="glyph-symbol glyph-symbol--1">⌬</div>
+            <div class="glyph-symbol glyph-symbol--2">◈</div>
+            <div class="glyph-symbol glyph-symbol--3">⟡</div>
+            <div class="glyph-symbol glyph-symbol--4">⌖</div>
+          </div>
+          <h2 class="overlay__title">Glyph Decoder</h2>
+          <p class="overlay__subtitle">Alien transmissions intercepted.<br>Decode the symbol patterns before the signal fades.</p>
+          <button class="btn btn--primary" id="btn-start">Begin Decoding</button>
+          <div class="title-hints">
+            <span class="control-hint">Match the pattern</span>
+            <span class="control-hint">Beat the clock</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gameplay Screen -->
+      <div class="screen" id="screen-game">
+        <!-- Timer Bar -->
+        <div class="timer-bar" id="timer-bar">
+          <div class="timer-bar__fill" id="timer-fill"></div>
+        </div>
+
+        <!-- Transmission message -->
+        <div class="transmission" id="transmission">
+          <span class="transmission__label">TRANSMISSION</span>
+          <span class="transmission__text" id="transmission-text">Decode the pattern...</span>
+        </div>
+
+        <!-- Pattern display (what to match) -->
+        <div class="pattern-area" id="pattern-area">
+          <div class="pattern-label">INTERCEPTED SIGNAL</div>
+          <div class="pattern-glyphs" id="pattern-glyphs">
+            <!-- Filled by game.js -->
+          </div>
+        </div>
+
+        <!-- Answer area (player selection) -->
+        <div class="answer-area" id="answer-area">
+          <div class="answer-label">YOUR DECODE</div>
+          <div class="answer-slots" id="answer-slots">
+            <!-- Filled by game.js -->
+          </div>
+        </div>
+
+        <!-- Glyph palette (clickable options) -->
+        <div class="palette-area" id="palette-area">
+          <div class="palette-label">GLYPH LIBRARY</div>
+          <div class="palette-glyphs" id="palette-glyphs">
+            <!-- Filled by game.js -->
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="game-actions" id="game-actions">
+          <button class="btn btn--small btn--clear" id="btn-clear">Clear</button>
+          <button class="btn btn--small btn--submit" id="btn-submit" disabled>Submit</button>
+        </div>
+      </div>
+
+      <!-- Result Flash (correct/wrong) -->
+      <div class="result-flash" id="result-flash">
+        <div class="result-flash__icon" id="result-icon"></div>
+        <div class="result-flash__text" id="result-text"></div>
+      </div>
+
+      <!-- Game Over Screen -->
+      <div class="screen" id="screen-gameover">
+        <div class="overlay__bg"></div>
+        <div class="overlay__content">
+          <h2 class="overlay__title overlay__title--fail">Signal Lost</h2>
+          <p class="overlay__subtitle">The transmission has faded into static...</p>
+          <div class="gameover-stats" id="gameover-stats">
+            <div class="stat-row"><span>Final Score</span><span id="go-score">0</span></div>
+            <div class="stat-row"><span>Level Reached</span><span id="go-level">1</span></div>
+            <div class="stat-row"><span>Patterns Decoded</span><span id="go-decoded">0</span></div>
+            <div class="stat-row"><span>Best Streak</span><span id="go-streak">0</span></div>
+          </div>
+          <button class="btn btn--primary" id="btn-retry">Retry Transmission</button>
+        </div>
+      </div>
+
+    </div><!-- /game-container -->
+
+  </div><!-- /game-page -->
+
+  <script src="game.js"></script>
+
+</body>
+
+</html>
