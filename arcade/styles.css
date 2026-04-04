@@ -202,6 +202,10 @@ body {
   background-image: linear-gradient(135deg, #f59e0b, var(--color-accent-purple), var(--color-accent-yellow));
 }
 
+.title-rs {
+  background-image: linear-gradient(135deg, #ef4444, #fb923c, #f59e0b);
+}
+
 /* Standard Back Link */
 .back-link {
   font-family: var(--font-display);

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="description"
+    content="Rogue Signal — a roguelike deck-builder where cards are radio signal commands to a lost deep-space probe. Play free in your browser.">
+  <title>Rogue Signal — Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Shared animated background -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="orb orb--1" aria-hidden="true"></div>
+  <div class="orb orb--2" aria-hidden="true"></div>
+
+  <div class="game-page">
+
+    <header class="arcade-header">
+      <a href="../" class="back-link" id="back-link">← Back to Arcade</a>
+      <h1 class="arcade-header__title arcade-header__title--gradient title-rs">Rogue Signal</h1>
+    </header>
+
+    <!-- HUD -->
+    <div class="hud" id="hud">
+      <div class="hud__item">
+        <span class="hud__label">HP</span>
+        <span class="hud__value" id="hud-hp">50/50</span>
+      </div>
+      <div class="hud__item">
+        <span class="hud__label">Sector</span>
+        <span class="hud__value" id="hud-sector">1/3</span>
+      </div>
+      <div class="hud__item">
+        <span class="hud__label">Credits</span>
+        <span class="hud__value" id="hud-credits">0</span>
+      </div>
+      <div class="hud__item">
+        <span class="hud__label">Deck</span>
+        <span class="hud__value" id="hud-deck">8</span>
+      </div>
+    </div>
+
+    <!-- Game Container — screens swap in/out -->
+    <div class="game-container" id="game-container">
+
+      <!-- Title Overlay -->
+      <div class="screen screen--active" id="screen-title">
+        <div class="overlay__bg"></div>
+        <div class="overlay__content title-screen">
+          <div class="title-signal-art" aria-hidden="true">
+            <div class="signal-dish"></div>
+            <div class="signal-wave signal-wave--1"></div>
+            <div class="signal-wave signal-wave--2"></div>
+            <div class="signal-wave signal-wave--3"></div>
+          </div>
+          <h2 class="overlay__title">Rogue Signal</h2>
+          <p class="overlay__subtitle">Guide a lost probe home through hostile deep space.<br>Your only tool: a deck of radio signal commands.</p>
+          <button class="btn btn--primary" id="btn-start">Begin Transmission</button>
+          <div class="title-hints">
+            <span class="control-hint">Deck-builder roguelike</span>
+            <span class="control-hint">3 sectors · 8 starter cards</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map Screen -->
+      <div class="screen" id="screen-map">
+        <div class="map-container" id="map-container">
+          <h2 class="map-title" id="map-title">Sector 1 — Debris Belt</h2>
+          <div class="map-graph" id="map-graph">
+            <!-- Populated by render.js -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Combat Screen -->
+      <div class="screen" id="screen-combat">
+        <div class="combat-container">
+          <!-- Enemy Area -->
+          <div class="enemy-area" id="enemy-area">
+            <!-- Populated by render.js -->
+          </div>
+
+          <!-- Combat Info -->
+          <div class="combat-info">
+            <div class="combat-info__energy" id="combat-energy">
+              <span class="energy-icon">⚡</span>
+              <span id="energy-current">3</span>/<span id="energy-max">3</span>
+            </div>
+            <div class="combat-info__piles">
+              <span class="pile-info" id="draw-pile-info" title="Draw pile">🃏 <span id="draw-count">0</span></span>
+              <span class="pile-info" id="discard-pile-info" title="Discard pile">♻️ <span id="discard-count">0</span></span>
+            </div>
+            <button class="btn btn--small btn--end-turn" id="btn-end-turn">End Turn</button>
+          </div>
+
+          <!-- Hand Area -->
+          <div class="hand-area" id="hand-area">
+            <!-- Cards populated by render.js -->
+          </div>
+
+          <!-- Block indicator on probe -->
+          <div class="probe-status" id="probe-status">
+            <div class="probe-hp-bar">
+              <div class="probe-hp-fill" id="probe-hp-fill"></div>
+            </div>
+            <span class="probe-hp-text" id="probe-hp-text">50/50</span>
+            <span class="probe-block" id="probe-block" style="display:none">🛡 <span id="block-amount">0</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reward Screen -->
+      <div class="screen" id="screen-reward">
+        <div class="reward-container">
+          <h2 class="reward-title">Signal Acquired</h2>
+          <p class="reward-subtitle">Choose a new card to add to your deck</p>
+          <div class="reward-cards" id="reward-cards">
+            <!-- 3 card choices populated by render.js -->
+          </div>
+          <button class="btn btn--secondary" id="btn-skip-reward">Skip</button>
+        </div>
+      </div>
+
+      <!-- Shop Screen -->
+      <div class="screen" id="screen-shop">
+        <div class="shop-container">
+          <h2 class="shop-title">Signal Relay Station</h2>
+          <p class="shop-credits">Credits: <span id="shop-credits">0</span></p>
+          <div class="shop-sections">
+            <div class="shop-section">
+              <h3 class="shop-section__title">Cards</h3>
+              <div class="shop-cards" id="shop-cards">
+                <!-- Populated by render.js -->
+              </div>
+            </div>
+            <div class="shop-section">
+              <h3 class="shop-section__title">Services</h3>
+              <div class="shop-services" id="shop-services">
+                <!-- Populated by render.js -->
+              </div>
+            </div>
+          </div>
+          <button class="btn btn--secondary" id="btn-leave-shop">Leave Station</button>
+        </div>
+      </div>
+
+      <!-- Event Screen -->
+      <div class="screen" id="screen-event">
+        <div class="event-container">
+          <div class="event-icon" id="event-icon">❓</div>
+          <h2 class="event-title" id="event-title">Unknown Signal</h2>
+          <p class="event-desc" id="event-desc">Description here.</p>
+          <div class="event-choices" id="event-choices">
+            <!-- Populated by render.js -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Over Screen -->
+      <div class="screen" id="screen-gameover">
+        <div class="overlay__bg"></div>
+        <div class="overlay__content">
+          <h2 class="overlay__title overlay__title--fail">Signal Lost</h2>
+          <p class="overlay__subtitle">The probe drifts into the void…</p>
+          <div class="gameover-stats" id="gameover-stats">
+            <div class="stat-row"><span>Sector Reached</span><span id="go-sector">1</span></div>
+            <div class="stat-row"><span>Nodes Cleared</span><span id="go-nodes">0</span></div>
+            <div class="stat-row"><span>Cards Collected</span><span id="go-cards">0</span></div>
+          </div>
+          <button class="btn btn--primary" id="btn-retry">Retry Transmission</button>
+        </div>
+      </div>
+
+      <!-- Victory Screen -->
+      <div class="screen" id="screen-victory">
+        <div class="overlay__bg"></div>
+        <div class="overlay__content">
+          <h2 class="overlay__title overlay__title--win">Probe Rescued!</h2>
+          <p class="overlay__subtitle">Signal locked. The probe is coming home.</p>
+          <div class="victory-stats" id="victory-stats">
+            <div class="stat-row"><span>Final HP</span><span id="vic-hp">0</span></div>
+            <div class="stat-row"><span>Nodes Cleared</span><span id="vic-nodes">0</span></div>
+            <div class="stat-row"><span>Cards in Deck</span><span id="vic-cards">0</span></div>
+            <div class="stat-row"><span>Credits Earned</span><span id="vic-credits">0</span></div>
+          </div>
+          <button class="btn btn--primary" id="btn-play-again">Play Again</button>
+        </div>
+      </div>
+
+    </div><!-- /game-container -->
+
+  </div><!-- /game-page -->
+
+  <!-- Game scripts (order matters — data first, then engine, render, main) -->
+  <script src="data.js"></script>
+  <script src="engine.js"></script>
+  <script src="render.js"></script>
+  <script src="game.js"></script>
+
+</body>
+
+</html>
