@@ -3,9 +3,8 @@
 ## Core Rules
 
 1. **Static-only** — Every game must work on a static-content hosted website with no back-end server. No server-side code, no APIs, no databases.
-2. **No build systems** — Do not use bundlers (`webpack`, `vite`, `parcel`, etc.) or transpilers. The source files _are_ the production files.
-3. **No package managers** — Do not use `npm`, `yarn`, or `pnpm` to install dependencies.
-4. **CDN imports are welcome** — You may use any framework or library (game engines, CSS frameworks, utility libraries) as long as it can be loaded via a `<script>` or `<link>` tag from a CDN (e.g. unpkg, cdnjs, jsdelivr).
+2. **No package managers** — Do not use `npm`, `yarn`, or `pnpm` to install dependencies.
+3. **CDN imports are welcome** — You may use any framework or library (game engines, CSS frameworks, utility libraries) as long as it can be loaded via a `<script>` or `<link>` tag from a CDN (e.g. unpkg, cdnjs, jsdelivr).
 
 ## Recommended Libraries
 

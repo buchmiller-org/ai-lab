@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Smash through neon bricks with power-ups and combo multipliers in this arcade breakout homage.">
+  <title>Bit Breaker — Arcade</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap">
+  
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>">
+</head>
+<body>
+
+  <!-- Standard Arcade Header -->
+  <header class="arcade-header">
+    <a href="../" class="back-link">← Back to Arcade</a>
+    <h1 class="arcade-header__title">Bit Breaker</h1>
+  </header>
+
+  <!-- Game Container -->
+  <main class="game-container">
+    
+    <!-- HUD Header -->
+    <div class="hud">
+      <div class="hud-left">
+        <div class="score-row">
+          <span class="hud-label">SCORE:</span>
+          <span id="score-display" class="hud-value">0</span>
+        </div>
+        <div class="score-row">
+          <span class="hud-label" style="color: var(--color-combo);">BEST:</span>
+          <span id="best-score-display" class="hud-value" style="color: var(--color-combo); font-size: 1.25rem;">0</span>
+        </div>
+      </div>
+      <div class="hud-center">
+        <div class="score-row center-row">
+          <span class="hud-label">LEVEL:</span>
+          <span id="level-display" class="hud-value">1</span>
+        </div>
+      </div>
+      <div class="hud-right">
+        <div class="score-row right-row">
+          <span class="hud-label">LIVES:</span>
+          <span id="lives-display" class="hud-value">3</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="game-stage" class="game-stage">
+
+      <!-- Combo Indicator -->
+      <div id="combo-container" class="combo-container hidden">
+        <span id="combo-value">x1</span>
+      </div>
+
+      <!-- Overlays -->
+      <div id="start-overlay" class="overlay active">
+        <h2>Ready?</h2>
+        <p>Click or press Space to start</p>
+      </div>
+
+      <div id="game-over-overlay" class="overlay">
+        <h2>Game Over</h2>
+        <p>Final Score: <span id="final-score">0</span></p>
+        <button id="restart-btn" class="arcade-btn">Restart System</button>
+      </div>
+
+      <div id="level-overlay" class="overlay">
+        <h2>Level Complete!</h2>
+        <p>Preparing next stage...</p>
+      </div>
+
+      <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+    
+    <div class="controls-hint">
+      <p>Use Mouse or ‹ › arrows to move. Break all the bricks!</p>
+    </div>
+  </main>
+
+  <script src="particles.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
