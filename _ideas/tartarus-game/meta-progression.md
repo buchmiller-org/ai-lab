@@ -20,28 +20,39 @@ Every rig carries a **Black Box** — a hardened telemetry recorder that survive
 - **Lowest-HP phase** — the phase where the rig was most critically stressed
 - **Data Cores earned** — a meta-currency amount scaled by overall run performance (depth reached + Canisters launched + enemies killed)
 
-### Reactive Starting Loadout
+### Reactive Adaptation Choice
 
-The recorded death cause directly influences the starting weapon loadout of the *next* run. The Overseer's system adapts to patterns of failure:
+The recorded death cause directly influences the **two adaptation options** presented to the Overseer before the next run begins. The system adapts to patterns of failure — but the Overseer decides how to apply that lesson.
 
-| Death Cause | Next Run Reactive Advantage |
-|:---|:---|
-| Overwhelmed by Scouts / Swarmers | Start with a wider-spread auto-turret schematic already installed |
-| Killed by Aquifer Elite (Zone 2) | Start with one weapon slot pre-upgraded to Mk.II |
-| Killed by Geode-Beetles (Zone 3) | Start with an AoE splash weapon schematic installed |
-| Failed the extraction sequence (Zone 6) | Start with +15% max hull HP |
-| Killed by Magma-Worm or retinue (Zone 4) | Start with a heavy single-target cannon schematic installed |
-| Killed by a disturbed Harvester | Wall-Harvest Laser yields 25% more Scrap for that run |
-| Killed by Hive Convergence (Zone 5) | Start with Coolant Vent unlocked (normally a Tier 2 purchase) |
+After uploading the Black Box, the Sector Map prompts:
 
-**Design intent:** A player who dies three times in Zone 2 will start their fourth run noticeably better equipped for Zone 2. They will make it further. Progress is earned even when it comes from failure — it just takes longer. A skilled player who completes early runs cleanly won't accumulate these advantages, but won't need them either.
+> *"Black Box analysis complete. Two adaptation packages available for [NEW-RIG-NAME] blueprint. Select one."*
 
-**First run:** No reactive advantage exists for run 1. The starting loadout is always the base configuration.
+The player is shown two options derived from the death cause:
+
+| Death Cause | Option A (Schematic) | Option B (Economy) |
+|:---|:---|:---|
+| Overwhelmed by Scouts / Swarmers | Start with wider-spread auto-turret schematic installed | +80 starting Scrap to build your own counter |
+| Killed by Aquifer Elite (Zone 2) | Start with one weapon slot pre-upgraded to Mk.II | +60 starting Scrap |
+| Killed by Geode-Beetles (Zone 3) | Start with an AoE splash weapon schematic installed | +80 starting Scrap |
+| Failed the extraction sequence (Zone 6) | Start with +15% max hull HP | Start with Canister Processing Meter filling 20% faster |
+| Killed by Magma-Worm or retinue (Zone 4) | Start with heavy single-target cannon schematic installed | +80 starting Scrap |
+| Killed by a disturbed Harvester | Wall-Harvest Laser yields 25% more Scrap this run | +60 starting Scrap |
+| Killed by Hive Convergence (Zone 5) | Start with Coolant Vent unlocked (normally a Tier 2 purchase) | +2 weapon slots begin at Mk.II |
+
+**Option A** always gives the specific schematic or capability that addresses the death cause directly. **Option B** always gives Scrap or resources to buy your own counter. Experienced players who have a plan will often take Option B. Players who are lost will take Option A and feel guided. Both are valid paths.
+
+**Design intent:** The Black Box teaches the system something from every death — but the Overseer decides how to apply the lesson. This preserves agency at the moment of re-engagement, making the death screen feel like a springboard rather than a consolation prize.
+
+**First run:** No reactive options exist for run 1. The starting loadout is always the base configuration.
 
 ### Megacorp Comms — Black Box Acknowledgment
 
-When the reactive loadout is applied:
-> *"Black Box telemetry from [PREVIOUS-RIG-NAME] processed. Revised specifications applied to [NEW-RIG-NAME] blueprints. Learn faster."*
+When the adaptation choice is presented:
+> *"Black Box telemetry from [PREVIOUS-RIG-NAME] processed. Cause of loss identified. Two adaptation packages are available. The Overseer will select one. Learn faster."*
+
+If the player always takes Option B (Scrap) and dies at the same zone repeatedly:
+> *"[NEW-RIG-NAME] adaptation: economic package selected again. The Megacorporation notes this pattern and reserves further comment."*
 
 ---
 

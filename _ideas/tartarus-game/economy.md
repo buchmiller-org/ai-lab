@@ -32,13 +32,21 @@ Each of the **4 weapon slots** on the bottom dashboard can be **tapped or clicke
 | Property | Value |
 |:---|:---|
 | **Cost per upgrade** | 50–100 Scrap (scales slightly with Mk level) |
-| **Upgrade progression** | Mk.I → Mk.II → Mk.III → Mk.IV (hard cap) |
-| **Upgrade effect** | Varies by weapon type (fire rate, damage per shot, projectile spread, range) |
+| **Upgrade progression** | Mk.I → Mk.II → *(fork)* → Mk.III → Mk.IV (hard cap) |
 | **Visual feedback** | Mk level indicator on slot ticks up; brief flash animation |
 
-**The Mark Cap matters:** Each weapon can only be upgraded 4 times before it stops accepting investment. This prevents players from hyper-focusing one slot and makes diversifying all 4 slots the optimal long-term strategy.
+#### The Mk.II Fork
 
-**Design intent:** Small enough to buy frequently. The player is never passively holding Scrap waiting for something meaningful to purchase. Every 50–100 Scrap increment is a decision.
+At Mk.II, each weapon slot presents a **one-time, permanent path choice** before the upgrade is applied. The slot highlights with a dual-option prompt: 
+
+- **Path A — Overcharge:** Increase damage per shot. More effective against high-HP armored targets (Geode-Beetles, Elites, Mini-Boss segments).
+- **Path B — Overdrive:** Increase fire rate. More effective against swarm volume (Scouts, Swarmers, Hive Convergence).
+
+The choice cannot be reversed. Mk.III and Mk.IV upgrades deepen the chosen path rather than offering a new fork.
+
+**The Mark Cap matters:** Each weapon can only be upgraded 4 times before it stops accepting investment. This prevents hyper-focusing one slot. Diversifying all 4 slots remains the optimal long-term strategy — but the fork means each slot also serves a distinct role.
+
+**Design intent:** The fork is a forecasting decision. A player who looks at what zone is coming next and what enemies they've been struggling with will choose differently than one who picks arbitrarily. Over a full run, the combination of 4 slot paths shapes a personal weapon profile. Players who go all Path A will have a very different Zone 5 experience than those who mixed paths. This is the primary source of build identity in a single run.
 
 ---
 

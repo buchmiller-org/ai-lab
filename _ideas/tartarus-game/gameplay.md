@@ -21,15 +21,26 @@ Progress is tracked by **Depth** in meters, advancing **500m per Phase**. The De
 
 ## Canister Launch Events
 
-Every 3 Phases (end of Phases 3, 6, 9, and 12), the rig pressurizes a batch of processed Kyloric material and fires a **Canister** toward the orbital ship. 
+Every 3 Phases, the rig finishes pressurizing a batch of processed Kyloric material. A **Canister Processing Meter** appears in the top bar, filling over the course of the phase. When full, the canister is ready — but the player decides when to fire.
 
-Each launch event:
-- Plays a brief launch animation with a streak of light toward the top of the screen
-- Fires a **directional exhaust blast** from the rig's launch port, dealing area damage to all enemies in its arc
-- Triggers a Megacorp confirmation transmission referencing the rig's designation
-- Seals the launch bay immediately — no vulnerability window
+### The Launch Decision
 
-The exhaust direction is fixed (upward, toward the orbital ship's position). It provides a reliable area clear on a predictable cadence, rewarding players who anticipate it rather than react to it.
+A ready canister is indicated by a pulsing cyan meter at full capacity and a Megacorp prompt: *"Batch pressurized. Launch authorized. Awaiting Overseer confirmation."*
+
+The player chooses:
+- **Fire now** — Canister launches immediately. Delivers current batch yield in Data Cores. Fires a **directional exhaust blast** from the rig's launch port dealing area damage to all enemies in its arc. Safe, predictable.
+- **Hold** — The canister continues processing beyond capacity, increasing the Data Core yield by approximately 40% if launched before the next phase ends. If the rig is destroyed while holding a full canister, the undelivered batch is lost.
+
+A held canister is visually indicated by an overflowing, pulsing amber meter. The Megacorp commentary reflects the exposure: *"VOID-FANG is sitting on an undelivered batch. Inefficiency and risk are both noted."*
+
+### On Launch
+
+- Brief launch animation: a streak of light toward the top of the screen
+- Exhaust blast AoE (fixed upward arc — toward the orbital ship's position)
+- Megacorp confirmation transmission referencing the rig's designation and batch yield
+- Meter resets; next pressurization cycle begins
+
+**Design intent:** Fire early for safety and a reliable area clear. Hold for a larger Data Core payout at personal risk. The optimal answer changes depending on current HP, wave density, and how desperate the next zone looks. This decision recurs 4 times per run and never has the same correct answer twice.
 
 ---
 
@@ -57,11 +68,15 @@ Chitinous defenders born in the mineral-rich Obsidian Mantle. Their exoskeletons
 - **Threat:** Forces AoE weapons or upgraded single-target; punishes players who haven't diversified their weapon loadout
 
 ### Harvester *(Zone 3+)*
-Found clinging to Kyloric wall deposits deep in the Mantle and below. Harvesters are feeding — not attacking. **They only detach and engage the rig if the player's Wall-Harvest Laser targets the deposit they occupy.** Undisturbed Harvesters never move.
+Found clinging to Kyloric wall deposits deep in the Mantle and below. Harvesters are feeding — not attacking. **They only detach and engage the rig if the player's Wall-Harvest Laser targets the deposit they occupy.** Undisturbed Harvesters never move — but they are not passive.
 
 - **Shape:** Flat elongated oval, pressed against the wall edge; visually pulsing
 - **Behavior:** Stationary until disturbed; then direct-path to rig
-- **Threat:** Conditional. The player chooses when and whether to provoke them. The deposit they guard yields bonus Scrap if harvested.
+- **Threat:** Conditional — and time-pressured. See below.
+
+**Harvesters drain deposits.** An undisturbed Harvester is actively consuming the deposit it guards. The deposit visibly shrinks over approximately 20 seconds. When depleted, the Harvester detaches satisfied and retreats off-screen — the player receives nothing. A pulsing warning indicator (amber ring around the deposit) activates when the deposit reaches 30% remaining yield.
+
+This transforms the Harvester decision from a static opt-in to a timed choice: act now to claim the Scrap and fight the Harvester; wait too long and lose both the resource and the decision entirely. A Megacorp line may comment: *"VOID-FANG, a Kyloric deposit is being consumed at the eastern wall. This is inefficient."*
 
 ### Aquifer Elite *(Zone 2 — One guaranteed spawn)*
 A large aquifer organism disturbed by the drill breaching the water table. Faster than a Geode-Beetle; substantially more durable than anything in Zone 1. This is the run's first real skill check and the moment a player's first upgrade purchase is tested.
@@ -94,7 +109,7 @@ This philosophy prevents "wasted presence" — the feeling that a system is fail
 
 Kyloric deposits glow at the **left and right edges of the center canvas** — the exposed tunnel walls scrolling upward as the drill descends. The player can tap or click a visible deposit to fire the rig's Wall-Harvest Laser, channeling for a brief moment before the deposit pays out **bonus Scrap**.
 
-**Risk — Harvesters:** Some deposits are guarded. A Harvester is visually obvious: a pulsing, clinging shape attached to the deposit's face. Targeting a guarded deposit causes the Harvester to detach and beeline for the rig. The player must decide: skip the deposit (lose the resource), or accept the fight (extra Scrap, extra threat).
+**Risk — Harvesters:** Some deposits are guarded. A Harvester is visually obvious: a pulsing, clinging shape attached to the deposit's face. Targeting a guarded deposit causes the Harvester to detach and beeline for the rig. The player must decide: skip the deposit, accept the fight, or wait — but waiting has a cost. **Harvesters drain deposits over time** (see Harvester entry above). The decision is not just *whether* to harvest but *when*, under active time pressure.
 
 **Deposit visibility:** Wall deposits are always visible at the canvas edges — no scrolling, panning, or secondary view required. The player never leaves the main game view to interact with them. Deposits appear and disappear naturally as new wall faces are exposed with each phase of drilling.
 
@@ -125,3 +140,25 @@ These systems are purchased through the Tier 2 Rig Overhaul panel and represent 
 | **Coolant Vent** | Spray coolant in a chosen direction, slowing all enemies in a cone by 60% for 3 seconds | 20s | Tap a direction on the canvas |
 | **Drill Angle Nudge** | Mid-phase event: the drill hits a geological pocket. Tap the correct direction within 3 seconds to maintain depth progress. Miss: 5-second depth stall. Hit: small Scrap bonus | Event-triggered | Timed directional tap |
 | **Canister Overload** | Trigger an emergency mini-exhaust-blast immediately — area damage, no Canister delivered to orbit | 45s | Dedicated button on dashboard |
+
+---
+
+## Zone Transition Events
+
+At every zone boundary (5 per run), the drill hits a brief geological transition — a 2–3 second natural pause as the machinery adjusts. During this window, a **Zone Transition Event** presents the player with a single forced choice before the next zone's first wave begins.
+
+Events are **context-sensitive**: the system reads current HP and Scrap balance and serves an event where neither option is obviously correct given the player's actual state. A player at low HP and low Scrap faces a different decision than one in a comfortable position.
+
+### Event Examples
+
+| Trigger Condition | Event | Option A | Option B |
+|:---|:---|:---|:---|
+| HP < 40% | Hull stress detected | **Vent coolant** — Take 12 HP damage, gain 80 Scrap | **Emergency patch** — Spend 60 Scrap, restore 20 HP |
+| Scrap > 300 | Geological windfall | **Extract bonus vein** — Gain 100 Scrap, next zone enemy HP +10% | **Bypass** — No effect |
+| HP > 70% | Optimal drilling conditions | **Push depth** — Accelerate: skip 5 seconds of next phase timer | **Standard descent** — No effect |
+| Scrap < 100 | Power cell fluctuation | **Reroute power** — Lose one weapon slot for 1 phase, gain 60 Scrap | **Hold configuration** — No effect |
+| Any (late game) | Seismic instability | **Brace** — Spend 50 Scrap, prevent next zone's guaranteed Elite from having its retinue | **Press on** — No effect |
+
+**Design intent:** Each event is a mirror held up to the player's current run state. The "right" answer is never universal — it depends on where you are, what you have, and what zone is coming. Over 5 events per run, these moments accumulate into a personalized decision record that meaningfully shaped the run. Players who ignored them will have different late-game resources than those who engaged.
+
+**Megacorp framing:** Events are delivered as terse drill reports — never tutorial text. *"Strata boundary reached. Geological anomaly: elevated pressure pocket. Overseer input required."*

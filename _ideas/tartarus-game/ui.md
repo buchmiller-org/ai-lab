@@ -39,6 +39,7 @@ Persistent HUD. Three columns, always visible.
 - **Depth counter:** Scrolls smoothly between values. The Zone label updates on zone transition with a brief flash.
 - **Health bar:** Chunky horizontal bar. Color transitions: green → yellow (below 50%) → red (below 25%). A Megacorp comm line is triggered when it crosses each threshold.
 - **Scrap counter:** Ticks up on each enemy kill. Brief highlight animation when a large drop occurs (Elite/Boss).
+- **Canister Processing Meter:** A secondary bar below the health bar, visible only when a canister batch is active (every 3 phases). Fills cyan over the course of the phase. When full, the bar pulses cyan and a Megacorp prompt appears. If the player holds the launch beyond full capacity, the bar edge overflows amber and pulses with increasing intensity. The meter resets immediately after launch.
 
 ---
 
@@ -117,9 +118,10 @@ Two states: **Extraction Complete** and **Unit Lost**
 - Megacorp loss acknowledgment transmission
 - Black Box upload animation (progress bar with corporate copy: *"Compressing telemetry..."*)
 - Death cause summary (`"Unit lost to: GEODE-BEETLE SWARM at depth 3,500m"`)
-- Reactive loadout preview: `"Next unit will be equipped with AoE Splash Cannon based on this telemetry"`
+- **Black Box Adaptation Choice:** Two option cards side-by-side. Left card: Option A (schematic/capability). Right card: Option B (Scrap/economy). Each card shows its label, effect, and a tap-to-select button. The choice must be made before the next run can begin. The cards use the same corporate dashboard aesthetic as the Orbital Workshop.
+- Megacorp prompt above the cards: *"Black Box analysis complete. Two adaptation packages available. Select one. The next unit is waiting."*
 - Data Cores earned (partial credit for depth and Canisters launched)
-- Buttons: `[ RETURN TO SECTOR MAP ]` / `[ DEPLOY NEW UNIT ]` (quick restart, same sector)
+- Buttons: `[ RETURN TO SECTOR MAP ]` / `[ DEPLOY NEW UNIT ]` (quick restart, same sector) — available only after the adaptation choice is made
 
 ---
 
@@ -137,7 +139,18 @@ Displayed between runs. The orbital view of the current planet.
 
 ---
 
-### Orbital Workshop Screen
+### Zone Transition Event Overlay
+
+Displayed at each zone boundary (5 times per run) during the 2–3 second geological transition pause. Appears as a full-width banner overlay across the center of the canvas — does not block the top bar or bottom dashboard.
+
+**Structure:**
+- Top line: `STRATA BOUNDARY — GEOLOGICAL ANOMALY DETECTED` (corporate monospace)
+- Event description: 1–2 sentences of terse drill report text
+- Two side-by-side option buttons (Option A left, Option B right), each with a label and brief effect summary
+- No timer — the event waits for input. Enemies do not spawn during the transition window.
+- After selection, the overlay fades and Zone X begins immediately.
+
+The overlay uses the same dark corporate aesthetic as the Tier 2 panel — semi-transparent dark background, corporate monospace font, no color embellishment beyond the standard HUD palette.
 
 Blueprint upgrade interface. Accessed from the Sector Map.
 
@@ -160,10 +173,12 @@ All visuals use Canvas 2D primitives only. No image files in the first build ite
 | Swarmers | Filled circle | `#ff6633` |
 | Geode-Beetles | Thick-bordered hexagon | `#cc44ff` |
 | Harvesters | Flat oval, at wall edge | `#44ffcc` (distinct from deposits) |
+| Harvester drain warning | Amber pulsing ring around deposit | `#ffaa00` at 70% opacity — activates at 30% deposit remaining |
 | Aquifer Elite | Large circle + inner ring | `#ff2222` |
 | Magma-Worm segments | Chain of large circles | `#ff8c00` |
 | Turret projectiles | Short yellow lines | `#ffee00` |
-| Kyloric wall deposits | Glowing cyan rectangles at canvas edge | `#00ffcc` |
+| Kyloric wall deposits | Glowing cyan rectangles at canvas edge | `#00ffcc` — visibly shrinks as Harvester drains it |
+| Canister Processing Meter | Horizontal sub-bar below health bar | Cyan (`#00ffcc`) filling; amber overflow (`#ffaa00`) when held past full |
 | Background base | Dark void | `#0f0f11` |
 | Rock texture layers | Upward-scrolling stripe layers | Alternating `#13131a` / `#0f0f11` |
 | Targeting Override marker | Pulsing red ring around marked enemy | `#ff0000` at 60% opacity |
