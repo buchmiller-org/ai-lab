@@ -1,0 +1,534 @@
+/* ============================================================
+   TARTARUS — Master Stylesheet
+   Corporate dark industrial aesthetic
+   ============================================================ */
+
+/* --- Reset & Base --- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Core palette */
+  --bg-void:        #0a0a0e;
+  --bg-panel:       #111118;
+  --bg-panel-hover: #1a1a24;
+  --border-dim:     #222233;
+  --border-bright:  #33334d;
+
+  /* Text */
+  --text-primary:   #d4d4dc;
+  --text-secondary: #8888a0;
+  --text-muted:     #55556a;
+
+  /* Accent colors (from programmer art spec) */
+  --cyan:           #00ffcc;
+  --cyan-dim:       rgba(0, 255, 204, 0.25);
+  --amber:          #ffaa00;
+  --amber-dim:      rgba(255, 170, 0, 0.15);
+  --red:            #ff4444;
+  --red-dim:        rgba(255, 68, 68, 0.15);
+  --green:          #44ff88;
+
+  /* Health bar states */
+  --health-high:    #44ff88;
+  --health-mid:     #ffcc00;
+  --health-low:     #ff4444;
+
+  /* Layout */
+  --top-bar-height: 72px;
+  --dashboard-height: 220px;
+  --max-width: 600px;
+
+  /* Fonts */
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================================
+   GAME CONTAINER — Full viewport, column layout
+   ============================================================ */
+#game-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ============================================================
+   A. TOP BAR — TELEMETRY
+   ============================================================ */
+#top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--top-bar-height);
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-dim);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+#top-bar__left,
+#top-bar__right {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 100px;
+}
+
+#top-bar__right {
+  text-align: right;
+  align-items: flex-end;
+}
+
+#top-bar__center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px;
+}
+
+.hud-value {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+}
+
+.hud-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* --- Health Bar --- */
+#health-bar-container {
+  width: 100%;
+  max-width: 220px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-dim);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+
+#health-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--health-high);
+  border-radius: 2px;
+  transition: width 0.3s ease, background-color 0.5s ease;
+}
+
+#health-bar-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bg-void);
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-shadow: 0 0 2px rgba(0,0,0,0.5);
+}
+
+/* --- Canister Bar --- */
+#canister-bar-container {
+  width: 100%;
+  max-width: 220px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-dim);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+#canister-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--cyan);
+  border-radius: 1px;
+  transition: width 0.2s linear;
+}
+
+#canister-bar-label {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+/* ============================================================
+   B. CENTER CANVAS — ACTION ZONE
+   ============================================================ */
+#canvas-wrapper {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+  background: var(--bg-void);
+}
+
+#game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #0f0f11;
+}
+
+/* --- Overlays --- */
+.overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.overlay-comm {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  padding: 10px 14px;
+  background: rgba(10, 10, 14, 0.92);
+  border: 1px solid var(--border-dim);
+  border-left: 3px solid var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--cyan);
+  letter-spacing: 0.3px;
+  line-height: 1.5;
+  z-index: 25;
+  animation: comm-fade-in 0.3s ease;
+}
+
+@keyframes comm-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   C. BOTTOM DASHBOARD — CONTROLS
+   ============================================================ */
+#dashboard {
+  flex-shrink: 0;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border-dim);
+  padding: 10px 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10;
+}
+
+/* --- Weapon Slots --- */
+#weapon-slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.weapon-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 6px;
+  background: var(--bg-void);
+  border: 1px solid var(--border-dim);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.weapon-slot:hover {
+  border-color: var(--border-bright);
+  background: var(--bg-panel-hover);
+}
+
+.weapon-slot:active {
+  background: rgba(0, 255, 204, 0.06);
+  border-color: var(--cyan);
+}
+
+.weapon-slot.locked {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+
+.slot-name {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+}
+
+.slot-mk {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--cyan);
+  letter-spacing: 0.5px;
+}
+
+.slot-cost {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+}
+
+.slot-cost.insufficient {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.slot-cost.maxed {
+  color: var(--cyan);
+  opacity: 0.7;
+}
+
+/* Upgrade purchase flash */
+@keyframes slot-flash {
+  0%   { border-color: var(--cyan); background: rgba(0, 255, 204, 0.12); }
+  100% { border-color: var(--border-dim); background: var(--bg-void); }
+}
+
+.weapon-slot.slot-upgraded {
+  animation: slot-flash 0.5s ease-out;
+}
+
+/* Insufficient scrap shake */
+@keyframes slot-shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-3px); }
+  40%      { transform: translateX(3px); }
+  60%      { transform: translateX(-2px); }
+  80%      { transform: translateX(2px); }
+}
+
+.weapon-slot.slot-denied {
+  animation: slot-shake 0.3s ease-out;
+}
+
+/* ============================================================
+   MK.II FORK OVERLAY
+   ============================================================ */
+#fork-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(5, 5, 8, 0.88);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  gap: 16px;
+  padding: 20px;
+}
+
+#fork-overlay .fork-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+#fork-overlay .fork-subtitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.fork-options {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.fork-btn {
+  flex: 1;
+  padding: 16px 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-dim);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.fork-btn:hover {
+  border-color: var(--cyan);
+  background: var(--bg-panel-hover);
+}
+
+.fork-btn:active {
+  background: rgba(0, 255, 204, 0.08);
+}
+
+.fork-btn .fork-label {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+}
+
+.fork-btn .fork-desc {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.fork-btn .fork-icon {
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+
+/* --- Overhaul Button --- */
+#overhaul-row {
+  display: flex;
+  justify-content: center;
+}
+
+.dashboard-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border-dim);
+  border-radius: 3px;
+  padding: 6px 20px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.dashboard-btn:hover {
+  color: var(--cyan);
+  border-color: var(--cyan);
+}
+
+/* --- Ultimate Button --- */
+#ultimate-row {
+  display: flex;
+  justify-content: center;
+}
+
+.ultimate-btn {
+  width: 140px;
+  height: 44px;
+  border-radius: 22px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.ultimate-btn.locked {
+  opacity: 0.3;
+  border-color: var(--text-muted);
+  color: var(--text-muted);
+  cursor: default;
+  pointer-events: none;
+}
+
+.ultimate-btn:not(.locked) {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 12px var(--cyan-dim);
+}
+
+.ultimate-btn:not(.locked):hover {
+  background: var(--cyan-dim);
+}
+
+/* ============================================================
+   UTILITY CLASSES
+   ============================================================ */
+.hidden {
+  display: none !important;
+}
+
+/* Scrap counter highlight animation */
+@keyframes scrap-pulse {
+  0%   { color: var(--cyan); text-shadow: 0 0 8px var(--cyan-dim); }
+  100% { color: var(--text-primary); text-shadow: none; }
+}
+
+.scrap-highlight {
+  animation: scrap-pulse 0.6s ease-out;
+}
+
+/* Zone label flash */
+@keyframes zone-flash {
+  0%   { color: var(--cyan); }
+  100% { color: var(--text-secondary); }
+}
+
+.zone-flash {
+  animation: zone-flash 1s ease-out;
+}
+
+/* ============================================================
+   RESPONSIVE — keep layout workable on wider screens
+   ============================================================ */
+@media (min-width: 601px) {
+  #game-container {
+    border-left: 1px solid var(--border-dim);
+    border-right: 1px solid var(--border-dim);
+  }
+}

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="TARTARUS — A roguelite survival mining game. Drill through hostile alien geology while fending off the Swarm.">
+  <title>TARTARUS — Drill. Survive. Extract.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Share+Tech+Mono&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-container">
+
+    <!-- A. TOP BAR — TELEMETRY -->
+    <header id="top-bar">
+      <div id="top-bar__left">
+        <span id="hud-depth" class="hud-value">DEPTH: 0m</span>
+        <span id="hud-zone" class="hud-label">ZONE 1 — THE SURFACE CRUST</span>
+      </div>
+      <div id="top-bar__center">
+        <div id="health-bar-container">
+          <div id="health-bar-fill"></div>
+          <span id="health-bar-label">HULL 100%</span>
+        </div>
+        <div id="canister-bar-container" class="hidden">
+          <div id="canister-bar-fill"></div>
+          <span id="canister-bar-label">CANISTER</span>
+        </div>
+      </div>
+      <div id="top-bar__right">
+        <span id="hud-scrap" class="hud-value">⚙ 0</span>
+        <span id="hud-scrap-label" class="hud-label">SCRAP</span>
+      </div>
+    </header>
+
+    <!-- B. CENTER CANVAS — ACTION ZONE -->
+    <main id="canvas-wrapper">
+      <canvas id="game-canvas"></canvas>
+      <!-- Overlays render on top of canvas -->
+      <div id="overlay-zone-transition" class="overlay hidden"></div>
+      <div id="overlay-comm" class="overlay-comm hidden"></div>
+    </main>
+
+    <!-- C. BOTTOM DASHBOARD — CONTROLS -->
+    <footer id="dashboard">
+      <!-- Row 1: Weapon Slots -->
+      <div id="weapon-slots">
+        <button class="weapon-slot" id="slot-0">
+          <span class="slot-name">TURRET A</span>
+          <span class="slot-mk">Mk.I</span>
+          <span class="slot-cost">⚙ 50</span>
+        </button>
+        <button class="weapon-slot" id="slot-1">
+          <span class="slot-name">TURRET B</span>
+          <span class="slot-mk">Mk.I</span>
+          <span class="slot-cost">⚙ 50</span>
+        </button>
+        <button class="weapon-slot" id="slot-2">
+          <span class="slot-name">— EMPTY —</span>
+          <span class="slot-mk"></span>
+          <span class="slot-cost"></span>
+        </button>
+        <button class="weapon-slot locked" id="slot-3">
+          <span class="slot-name">— EMPTY —</span>
+          <span class="slot-mk"></span>
+          <span class="slot-cost"></span>
+        </button>
+      </div>
+
+      <!-- Row 2: Rig Overhaul Button -->
+      <div id="overhaul-row">
+        <button id="btn-overhaul" class="dashboard-btn">[ RIG OVERHAUL ]</button>
+      </div>
+
+      <!-- Row 3: Ultimate Button -->
+      <div id="ultimate-row">
+        <button id="btn-ultimate" class="dashboard-btn ultimate-btn locked">
+          <span id="ultimate-label">[ LOCKED ]</span>
+        </button>
+      </div>
+    </footer>
+
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
