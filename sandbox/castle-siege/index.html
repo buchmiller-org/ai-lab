@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Castle Siege — Sandbox</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #1a1a2e; color: #eee; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
+    a.back { color: #aaa; text-decoration: none; margin: 10px; align-self: flex-start; }
+    a.back:hover { color: #fff; }
+    .screen { display: none; flex-direction: column; align-items: center; }
+    .screen.active { display: flex; }
+
+    /* ---- CASTLE SCREEN ---- */
+    #castle-screen h1 { margin: 30px 0 6px; font-size: 24px; }
+    .iron-bar { font-size: 16px; color: #b0b0b0; margin-bottom: 24px; }
+    .panel { width: 400px; background: #222; border: 1px solid #333; border-radius: 6px; padding: 16px 20px; margin-bottom: 16px; }
+    .panel h2 { font-size: 16px; margin-bottom: 12px; color: #aaa; border-bottom: 1px solid #333; padding-bottom: 6px; }
+    .stat-row { display: grid; grid-template-columns: 1fr 60px 140px; gap: 12px; align-items: center; padding: 6px 0; }
+    .stat-label { font-size: 14px; }
+    .stat-value { font-size: 14px; color: #ccc; text-align: right; }
+    .upgrade-btn {
+      padding: 4px 12px; font-size: 12px; cursor: pointer;
+      background: #333; color: #eee; border: 1px solid #555; border-radius: 3px;
+    }
+    .upgrade-btn:hover:not(:disabled) { background: #444; border-color: #888; }
+    .upgrade-btn:disabled { opacity: 0.35; cursor: default; }
+    #battle-btn {
+      margin-top: 20px; padding: 12px 40px; font-size: 16px; cursor: pointer;
+      background: #2d6a4f; color: #fff; border: 1px solid #40916c; border-radius: 4px;
+    }
+    #battle-btn:hover { background: #40916c; }
+
+    /* ---- BATTLE SCREEN ---- */
+    canvas { border: 1px solid #333; margin-top: 10px; }
+    #hud { width: 800px; display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 16px; font-weight: bold; }
+    #iron-display { color: #b0b0b0; }
+    #battle-controls { width: 800px; display: flex; justify-content: center; gap: 24px; align-items: center; margin-top: 16px; }
+    #gold-display { font-size: 20px; font-weight: bold; color: #ffd700; }
+    #spawn-btn {
+      padding: 10px 24px; font-size: 16px; cursor: pointer;
+      background: #2d6a4f; color: #fff; border: 1px solid #40916c; border-radius: 4px; font-weight: bold;
+    }
+    #spawn-btn:disabled { opacity: 0.4; cursor: default; }
+    #spawn-btn:hover:not(:disabled) { background: #40916c; }
+
+    /* ---- END OVERLAY ---- */
+    #end-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85); flex-direction: column; align-items: center; justify-content: center;
+    }
+    #end-overlay.visible { display: flex; }
+    #end-overlay h2 { font-size: 28px; margin-bottom: 8px; }
+    #end-overlay .iron-earned { font-size: 16px; color: #b0b0b0; margin-bottom: 24px; }
+    #return-btn {
+      padding: 10px 32px; font-size: 16px; cursor: pointer;
+      background: #2d6a4f; color: #fff; border: 1px solid #40916c; border-radius: 4px;
+    }
+    #return-btn:hover { background: #40916c; }
+  </style>
+</head>
+<body>
+  <a href="../" class="back">← Back to Sandbox</a>
+
+  <!-- ==================== CASTLE SCREEN ==================== -->
+  <div id="castle-screen" class="screen active">
+    <h1>Castle Siege</h1>
+    <p class="iron-bar">Iron: <span id="iron">0</span></p>
+
+    <div class="panel">
+      <h2>Castle</h2>
+      <div class="stat-row">
+        <span class="stat-label">Castle HP</span>
+        <span class="stat-value" id="castle-hp">100</span>
+        <span></span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Gold Income</span>
+        <span class="stat-value" id="income-val">5/s</span>
+        <button class="upgrade-btn" id="upg-income">+1/s (<span id="income-cost">5</span> iron)</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Unit</h2>
+      <div class="stat-row">
+        <span class="stat-label">HP</span>
+        <span class="stat-value" id="unit-hp">30</span>
+        <button class="upgrade-btn" id="upg-hp">+10 (<span id="hp-cost">5</span> iron)</button>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Damage</span>
+        <span class="stat-value" id="unit-dmg">5</span>
+        <button class="upgrade-btn" id="upg-dmg">+2 (<span id="dmg-cost">5</span> iron)</button>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Speed</span>
+        <span class="stat-value" id="unit-spd">50</span>
+        <span></span>
+      </div>
+    </div>
+
+    <button id="battle-btn">⚔ Go to Battle</button>
+  </div>
+
+  <!-- ==================== BATTLE SCREEN ==================== -->
+  <div id="battle-screen" class="screen">
+    <div id="hud">
+      <span id="iron-display">Iron Earned: 0</span>
+      <span id="timer-display">2:00</span>
+    </div>
+    <canvas id="game" width="800" height="300"></canvas>
+    <div id="battle-controls">
+      <span id="gold-display">Gold: 0</span>
+      <button id="spawn-btn">Deploy Unit (10g)</button>
+    </div>
+  </div>
+
+  <!-- ==================== END OVERLAY ==================== -->
+  <div id="end-overlay">
+    <h2 id="result-title">Victory!</h2>
+    <p class="iron-earned">Iron earned: <span id="iron-earned">0</span></p>
+    <button id="return-btn">Return to Castle</button>
+  </div>
+
+  <script>
+    // ---- PERSISTENT STATE ----
+    const DEFAULTS = { iron: 0, unitHP: 30, unitDmg: 5, goldIncome: 0, upgHpCost: 5, upgDmgCost: 5, upgIncomeCost: 5 };
+    let state = Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem('castleSiege') || '{}'));
+    const COST_INCREASE = 3;
+    const BASE_INCOME = 1;
+    function save() { localStorage.setItem('castleSiege', JSON.stringify(state)); }
+
+    // ---- SCREEN SWITCHING ----
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    // ---- CASTLE SCREEN ----
+    function refreshCastle() {
+      document.getElementById('iron').textContent = state.iron;
+      document.getElementById('unit-hp').textContent = state.unitHP;
+      document.getElementById('unit-dmg').textContent = state.unitDmg;
+      document.getElementById('income-val').textContent = (BASE_INCOME + state.goldIncome) + '/s';
+      document.getElementById('hp-cost').textContent = state.upgHpCost;
+      document.getElementById('dmg-cost').textContent = state.upgDmgCost;
+      document.getElementById('income-cost').textContent = state.upgIncomeCost;
+      document.getElementById('upg-hp').disabled = state.iron < state.upgHpCost;
+      document.getElementById('upg-dmg').disabled = state.iron < state.upgDmgCost;
+      document.getElementById('upg-income').disabled = state.iron < state.upgIncomeCost;
+    }
+
+    document.getElementById('upg-hp').addEventListener('click', () => {
+      if (state.iron >= state.upgHpCost) { state.iron -= state.upgHpCost; state.unitHP += 10; state.upgHpCost += COST_INCREASE; save(); refreshCastle(); }
+    });
+    document.getElementById('upg-dmg').addEventListener('click', () => {
+      if (state.iron >= state.upgDmgCost) { state.iron -= state.upgDmgCost; state.unitDmg += 2; state.upgDmgCost += COST_INCREASE; save(); refreshCastle(); }
+    });
+    document.getElementById('upg-income').addEventListener('click', () => {
+      if (state.iron >= state.upgIncomeCost) { state.iron -= state.upgIncomeCost; state.goldIncome += 1; state.upgIncomeCost += COST_INCREASE; save(); refreshCastle(); }
+    });
+
+    // ---- BATTLE CONFIG ----
+    const CANVAS_W = 800, CANVAS_H = 300, LANE_Y = 200;
+    const CASTLE_MAX_HP = 100, UNIT_COST = 10, STARTING_GOLD = 10;
+    const IRON_PER_KILL = 1, MATCH_DURATION = 120;
+    const ENEMY_BASE_HP = 40, ENEMY_BASE_DMG = 8, ENEMY_SPEED = 40;
+    const WAVE_INTERVAL_START = 6, WAVE_INTERVAL_MIN = 2, WAVE_SIZE_START = 1;
+
+    // ---- BATTLE STATE ----
+    let gold, ironEarned, playerCastleHP, enemyCastleHP;
+    let playerUnits, enemyUnits, matchTime, waveTimer, gameRunning, lastTime;
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    function createUnit(x, hp, dmg, speed, team) {
+      return { x, y: LANE_Y, hp, maxHp: hp, dmg, speed, team, attackCooldown: 0 };
+    }
+
+    // ---- START BATTLE ----
+    document.getElementById('battle-btn').addEventListener('click', () => {
+      gold = STARTING_GOLD;
+      ironEarned = 0;
+      playerCastleHP = CASTLE_MAX_HP;
+      enemyCastleHP = CASTLE_MAX_HP;
+      playerUnits = [];
+      enemyUnits = [];
+      matchTime = 0;
+      waveTimer = 0;
+      gameRunning = true;
+      showScreen('battle-screen');
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    });
+
+    // ---- SPAWN ----
+    document.getElementById('spawn-btn').addEventListener('click', () => {
+      if (!gameRunning || gold < UNIT_COST) return;
+      gold -= UNIT_COST;
+      playerUnits.push(createUnit(60, state.unitHP, state.unitDmg, 50, 'player'));
+    });
+
+    // ---- ENEMY WAVES ----
+    function spawnEnemyWave() {
+      const progress = matchTime / MATCH_DURATION;
+      const count = Math.floor(WAVE_SIZE_START + progress * 3);
+      const hpScale = 1 + progress * 1.5;
+      const dmgScale = 1 + progress * 1.0;
+      for (let i = 0; i < count; i++) {
+        enemyUnits.push(createUnit(
+          CANVAS_W - 60 + Math.random() * 20,
+          Math.floor(ENEMY_BASE_HP * hpScale),
+          Math.floor(ENEMY_BASE_DMG * dmgScale),
+          ENEMY_SPEED + progress * 15,
+          'enemy'
+        ));
+      }
+    }
+
+    // ---- END BATTLE ----
+    function endBattle(won) {
+      gameRunning = false;
+      if (won) ironEarned += 10;
+      state.iron += ironEarned;
+      save();
+      document.getElementById('result-title').textContent = won ? 'Victory!' : 'Defeat';
+      document.getElementById('iron-earned').textContent = ironEarned;
+      document.getElementById('end-overlay').classList.add('visible');
+    }
+
+    document.getElementById('return-btn').addEventListener('click', () => {
+      document.getElementById('end-overlay').classList.remove('visible');
+      showScreen('castle-screen');
+      refreshCastle();
+    });
+
+    // ---- GAME LOOP ----
+    function loop(now) {
+      if (!gameRunning) return;
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+      matchTime += dt;
+      gold += (BASE_INCOME + state.goldIncome) * dt;
+
+      const waveInterval = Math.max(WAVE_INTERVAL_MIN, WAVE_INTERVAL_START - (matchTime / MATCH_DURATION) * (WAVE_INTERVAL_START - WAVE_INTERVAL_MIN));
+      waveTimer += dt;
+      if (waveTimer >= waveInterval) { waveTimer = 0; spawnEnemyWave(); }
+
+      const ATTACK_RANGE = 20, ATTACK_COOLDOWN = 0.8;
+      updateUnits(playerUnits, enemyUnits, 1, ATTACK_RANGE, ATTACK_COOLDOWN, dt, true);
+      updateUnits(enemyUnits, playerUnits, -1, ATTACK_RANGE, ATTACK_COOLDOWN, dt, false);
+
+      for (let i = playerUnits.length - 1; i >= 0; i--) {
+        if (playerUnits[i].hp <= 0) playerUnits.splice(i, 1);
+      }
+      for (let i = enemyUnits.length - 1; i >= 0; i--) {
+        if (enemyUnits[i].hp <= 0) { ironEarned += IRON_PER_KILL; enemyUnits.splice(i, 1); }
+      }
+
+      if (enemyCastleHP <= 0) { endBattle(true); return; }
+      if (playerCastleHP <= 0) { endBattle(false); return; }
+
+      draw();
+      document.getElementById('gold-display').textContent = `Gold: ${Math.floor(gold)}`;
+      document.getElementById('iron-display').textContent = `Iron Earned: ${ironEarned}`;
+      const remaining = Math.max(0, MATCH_DURATION - matchTime);
+      document.getElementById('timer-display').textContent = `${Math.floor(remaining / 60)}:${String(Math.floor(remaining % 60)).padStart(2, '0')}`;
+      document.getElementById('spawn-btn').disabled = gold < UNIT_COST;
+
+      requestAnimationFrame(loop);
+    }
+
+    function updateUnits(units, enemies, direction, range, cooldown, dt, isPlayer) {
+      for (const unit of units) {
+        let target = null, nearestDist = Infinity;
+        for (const enemy of enemies) {
+          const dist = Math.abs(unit.x - enemy.x);
+          if (dist < nearestDist && ((direction > 0 && enemy.x > unit.x) || (direction < 0 && enemy.x < unit.x))) {
+            nearestDist = dist; target = enemy;
+          }
+        }
+        if (target && nearestDist <= range) {
+          unit.attackCooldown -= dt;
+          if (unit.attackCooldown <= 0) { target.hp -= unit.dmg; unit.attackCooldown = cooldown; }
+        } else {
+          const castleDist = isPlayer ? (CANVAS_W - 50) - unit.x : unit.x - 50;
+          if (castleDist <= range) {
+            unit.attackCooldown -= dt;
+            if (unit.attackCooldown <= 0) {
+              if (isPlayer) enemyCastleHP -= unit.dmg;
+              else playerCastleHP -= unit.dmg;
+              unit.attackCooldown = cooldown;
+            }
+          } else {
+            unit.x += unit.speed * direction * dt;
+          }
+        }
+      }
+    }
+
+    // ---- DRAW ----
+    function draw() {
+      ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+      ctx.fillStyle = '#2a3d14'; ctx.fillRect(0, LANE_Y + 20, CANVAS_W, CANVAS_H - LANE_Y - 20);
+      ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, 0, CANVAS_W, LANE_Y + 20);
+
+      // Castles
+      ctx.fillStyle = '#3a7ca5'; ctx.fillRect(10, LANE_Y - 40, 40, 60);
+      drawHP(30, LANE_Y - 50, playerCastleHP, CASTLE_MAX_HP, 36, 5);
+      ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(`${Math.max(0, Math.floor(playerCastleHP))}`, 30, LANE_Y - 60);
+
+      ctx.fillStyle = '#a53a3a'; ctx.fillRect(CANVAS_W - 50, LANE_Y - 40, 40, 60);
+      drawHP(CANVAS_W - 30, LANE_Y - 50, enemyCastleHP, CASTLE_MAX_HP, 36, 5);
+      ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(`${Math.max(0, Math.floor(enemyCastleHP))}`, CANVAS_W - 30, LANE_Y - 60);
+
+      // Player units — set color before each rect so HP bar drawing doesn't clobber it
+      for (const u of playerUnits) {
+        ctx.fillStyle = '#5b9bd5';
+        ctx.fillRect(u.x - 6, u.y - 14, 12, 28);
+        drawHP(u.x, u.y - 18, u.hp, u.maxHp, 14, 3);
+      }
+
+      // Enemy units
+      for (const u of enemyUnits) {
+        ctx.fillStyle = '#d55b5b';
+        ctx.fillRect(u.x - 6, u.y - 14, 12, 28);
+        drawHP(u.x, u.y - 18, u.hp, u.maxHp, 14, 3);
+      }
+    }
+
+    function drawHP(cx, y, hp, max, w, h) {
+      const r = Math.max(0, hp / max);
+      ctx.fillStyle = '#333'; ctx.fillRect(cx - w / 2, y, w, h);
+      ctx.fillStyle = r > 0.5 ? '#4caf50' : r > 0.25 ? '#ff9800' : '#f44336';
+      ctx.fillRect(cx - w / 2, y, w * r, h);
+    }
+
+    // ---- INIT ----
+    refreshCastle();
+  </script>
+</body>
+</html>
