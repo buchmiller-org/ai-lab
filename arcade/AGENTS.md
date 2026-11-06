@@ -2,11 +2,15 @@
 
 These instructions apply specifically when creating or modifying games and pages within the `arcade/` directory.
 
-## Core Rules
+## Rules & Inheritance
 
-1. **Static-only** — Every game must work on a static-content hosted website with no back-end server. No server-side code, no APIs, no databases.
-2. **No package managers** — Do not use `npm`, `yarn`, or `pnpm` to install dependencies.
-3. **CDN imports are welcome** — You may use any framework or library (game engines, CSS frameworks, utility libraries) as long as it can be loaded via a `<script>` or `<link>` tag from a CDN (e.g. unpkg, cdnjs, jsdelivr).
+The Arcade **inherits all universal rules from root [`AGENTS.md`](../AGENTS.md)** (Static-Only, No Package Managers for project dependencies or build tooling, Subpath Safety / Relative Paths Only, Self-Contained Isolation).
+
+Arcade-specific rules & additions:
+1. **Shared Suite Stylesheet:** Games inside `arcade/<game-name>/` link to The Arcade's shared stylesheet: `<link rel="stylesheet" href="../styles.css">`. (They must NOT import root `../../styles.css` or assets from sibling games.)
+2. **Visual & Font Identity:** Google Fonts (Orbitron for headers + Inter for UI/body) must be loaded via `<link>` tags in HTML `<head>` with preconnect hints. **Never use CSS `@import`** to prevent font flash (FOUT).
+3. **Mobile Viewport & `user-scalable=no` Decision:** Arcade game pages may use `<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">` to prevent accidental double-tap-to-zoom or pinch gestures from disrupting fast canvas/touch gameplay.
+   - *Accessibility Trade-off:* Disabling user scaling impacts low-vision accessibility. This is an intentional trade-off *strictly limited* to interactive arcade game canvases requiring fast touch interactions. It must never be applied to landing pages, documentation, tools, or non-arcade projects. Ensure game typography, HUD elements, and high-contrast visuals remain clearly legible on smaller mobile screens.
 
 ## Recommended Libraries
 
@@ -49,9 +53,9 @@ The Arcade uses Google Fonts (Orbitron for headers + Inter for UI/body), loaded 
 
 Each game page (`arcade/<game-name>/index.html`) should:
 
-- Be fully self-contained within its folder (`arcade/<game-name>/`).
+- Be self-contained within its folder (`arcade/<game-name>/`), with the sole exception of importing `<link rel="stylesheet" href="../styles.css">`.
 - Include the preconnect + Google Fonts `<link>` tags for Orbitron and Inter.
-- Include `<meta charset="UTF-8">` and viewport meta tag.
+- Include `<meta charset="UTF-8">` and the game viewport meta tag (`user-scalable=no` permitted for touch gesture handling).
 - Include a descriptive `<title>` in the format: `Game Name — Arcade`.
 - Include a meta description.
 - Include a standard arcade header with a "← Back to Arcade" link pointing to `../`:
@@ -64,14 +68,18 @@ Each game page (`arcade/<game-name>/index.html`) should:
 - Game styles must be in a separate `style.css` file within the game folder (no large inline `<style>` blocks).
 - Game logic must be in separate `.js` file(s) within the game folder (`game.js`, `entities.js`, etc.).
 
-## Arcade Landing Page Cards (`arcade/index.html`)
+## Landing Page Cards & Thumbnail Design (`arcade/index.html` & `landing.css`)
 
-When adding a new game, a card must be added to `arcade/index.html` inside the `<section class="games-grid" id="games-grid">` element. Follow this pattern:
+When adding a new game, register its card in `arcade/index.html` and define its thumbnail background in `arcade/landing.css`.
+
+### 1. Card Markup (`arcade/index.html`)
+
+Add the card inside `<section class="games-grid" id="games-grid">`:
 
 ```html
 <a href="<game-name>/" class="game-card" id="card-<game-name>">
   <div class="game-card__thumb game-card__thumb--<game-name>">
-    <!-- Abstract thumbnail SVG/CSS shapes -->
+    <!-- Abstract thumbnail SVG/CSS shapes representing the game -->
   </div>
   <div class="game-card__body">
     <h2 class="game-card__title">Game Name</h2>
@@ -81,16 +89,24 @@ When adding a new game, a card must be added to `arcade/index.html` inside the `
 </a>
 ```
 
-### Card hover effects & color themes
+### 2. Thumbnail Visuals (SVG/CSS Shapes + Gradient)
 
-The game cards automatically cycle through 5 distinct color themes using CSS `:nth-child` rules in `landing.css`. You do not need to add or define new classes for the border glow, box-shadow glow, or play button color. When adding a new game card, you only need to define its thumbnail background gradient in `landing.css`:
+A complete game thumbnail consists of two components:
+- **Background Gradient (`arcade/landing.css`):** Add a rule for `.game-card__thumb--<game-name>` setting a custom linear or radial gradient reflecting the game's color palette:
+  ```css
+  .game-card__thumb--<game-name> {
+    background: linear-gradient(135deg, #1a103c 0%, #2e1065 50%, #0f172a 100%);
+  }
+  ```
+- **Abstract Shapes (inside `.game-card__thumb` in HTML):** Add lightweight SVG or CSS shapes that visually symbolize the game (e.g. geometric icons, grid lines, stylized ships, or glowing nodes). Keep animation subtle or static to prevent the landing grid from feeling noisy.
 
-1. `game-card__thumb--<game-name>` — the thumbnail background gradient.
+### 3. Card Hover & Color Themes
 
-Keep these hover gotchas in mind:
-- **`backdrop-filter` + `::before` glow conflict:** The card has `backdrop-filter: blur(16px)` which will blur the `::before` gradient behind it, causing color bleed-through. On hover, `backdrop-filter: none` is set to prevent this.
-- **Opaque card body on hover:** `.game-card__body` must have a solid background on hover so the gradient glow only appears at card edges.
+The game cards automatically cycle through 5 distinct neon color themes using CSS `:nth-child` rules in `landing.css`. You do **not** need to define border glows, box-shadows, or CTA arrow colors.
+Keep these hover styling gotchas in mind:
+- **`backdrop-filter` + `::before` glow conflict:** The card has `backdrop-filter: blur(16px)` which blurs the `::before` gradient behind it, causing color bleed. On hover, `backdrop-filter: none` is set to prevent this.
+- **Opaque card body on hover:** `.game-card__body` must have a solid background on hover so the gradient glow only frames the card edges.
 
 ## Workflows
 
-See `.agents/workflows/add-arcade-game.md` for the full step-by-step checklist.
+See `.agents/workflows/add-arcade-game.md` for the step-by-step checklist.

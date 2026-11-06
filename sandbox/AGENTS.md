@@ -12,14 +12,13 @@ Unlike **The Arcade** (which demands a unified retro-neon theme, Orbitron font, 
 
 ---
 
-## Core Rules
+## Rules & Inheritance
 
-1. **Static-Only** — Pure client-side static hosting. No backend servers, no server-side APIs, no databases.
-2. **No Package Managers** — Do not use `npm`, `yarn`, or `pnpm`. Load game libraries (Phaser, Three.js, PixiJS, Matter.js, p5.js, Howler.js, etc.) via CDN `<script>` or `<link>` tags.
-3. **Subpath Safety & Relative Paths** — Always use relative links:
-   - Sibling assets: `./style.css`, `./game.js`
-   - Back to Sandbox: `../`
-4. **Self-Contained** — Keep all assets, styles, and logic within the prototype folder (`sandbox/<prototype-name>/`). Do not import stylesheets from `arcade/` or the root `styles.css`.
+The Sandbox **inherits all universal rules from root [`AGENTS.md`](../AGENTS.md)** (Static-Only, No Package Managers for project dependencies or build tooling, Subpath Safety / Relative Paths Only, Self-Contained Isolation).
+
+Sandbox-specific additions:
+- **Theme-Agnostic:** Prototypes are not bound to any arcade aesthetic, Orbitron font, or neon glow borders. Prioritize testing core gameplay loops, mechanics, controls, or systems with clean, purposeful styling.
+- **Strict Isolation:** Prototypes must never import stylesheets or scripts from `arcade/` or root `styles.css`. All assets must reside within the prototype directory or load via CDN.
 
 ---
 
@@ -31,18 +30,20 @@ Many prototypes in the sandbox originate from design documents located in the `_
 
 ---
 
-## Prototype Page Conventions
+## Prototype Conventions & Structure
 
 Each prototype (`sandbox/<prototype-name>/index.html`) should:
 
-1. Be fully self-contained within its folder.
-2. Include standard HTML5 meta tags (`<meta charset="UTF-8">`, viewport).
-3. Include a descriptive `<title>`: `Prototype Name — Sandbox`.
-4. Include a back navigation link to Sandbox:
+1. **Be self-contained** within its folder (`sandbox/<prototype-name>/`).
+2. **Structure flexibility (Single-file vs. Multi-file):**
+   - **Single-file prototypes are fully allowed** and encouraged for fast proof-of-concepts, game jams, or isolated mechanics experiments (e.g., `castle-siege` and `optics/*`, where HTML, `<style>`, and `<script>` are in one `index.html`).
+   - **Multi-file prototypes** (`index.html`, `style.css`, and modular JS files like `gameState.js`, `entities.js`, `spawner.js`) are recommended when mechanics grow in scope or complexity (e.g., `tartarus`).
+3. Include standard HTML5 meta tags (`<meta charset="UTF-8">`, responsive viewport).
+4. Include a descriptive `<title>`: `Prototype Name — Sandbox`.
+5. Include a back navigation link to Sandbox:
    ```html
    <a href="../" class="back-link">← Back to Sandbox</a>
    ```
-5. Split complex logic into modular JS files if needed (e.g., `gameState.js`, `entities.js`, `spawner.js`).
 
 ---
 

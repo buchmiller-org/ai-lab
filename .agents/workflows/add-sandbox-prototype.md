@@ -23,10 +23,10 @@ description: How to add a new experimental prototype to The Sandbox
      <a href="../" class="back-link">← Back to Sandbox</a>
      ```
    - Import necessary CDN dependencies (e.g., Phaser, Pixi, Three.js, p5.js, Howler.js).
-   - Keep styles in a local `style.css` or concise `<style>` block.
+   - Keep styles in a local `style.css` or concise `<style>` block. Single-file prototypes (HTML + `<style>` + `<script>` combined in `index.html`) are completely allowed for quick tests.
 
 4. **Implement the Prototype Logic**
-   - For simple prototypes, a single `main.js` or `game.js` may suffice.
+   - For rapid experiments or single-file prototypes, write script logic directly in `<script>` tags or a single `main.js`/`game.js`.
    - For larger prototypes with entities, states, or UI, split into focused files (e.g. `gameState.js`, `entities.js`, `ui.js`) loaded via `<script>` tags.
 
 5. **Register Card in `sandbox/index.html`**
@@ -43,5 +43,5 @@ description: How to add a new experimental prototype to The Sandbox
      ```
 
 6. **Verify Navigation & Gameplay**
-   - Test locally with `cmd /c "npx -y serve -l 3000"`.
+   - Test locally with `npx -y serve -l 3000` or `python3 -m http.server 3000`.
    - Verify that clicking "← Back to Sandbox" takes you back to `sandbox/index.html`, and from there back to AI Lab.

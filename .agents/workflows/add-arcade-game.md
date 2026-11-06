@@ -38,6 +38,9 @@ description: How to add a new game to The Arcade
 
    > **Important:** Do NOT use `@import` in CSS for Google Fonts — always use `<link>` tags in HTML to avoid font flash (FOUT).
 
-3. **Add a card to the landing page** — Open the arcade `index.html` (`arcade/index.html`) and add a new `<a class="game-card">` element inside `<section class="games-grid">`. Follow the card HTML pattern documented in `arcade/AGENTS.md`.
+3. **Register card and thumbnail on the landing page** — Open `arcade/index.html` and add a new game card inside `<section class="games-grid">`, following the consolidated instructions in [`arcade/AGENTS.md`](../../arcade/AGENTS.md#landing-page-cards--thumbnail-design-arcadeindexhtml--landingcss):
+   - Add the card markup inside `<section class="games-grid" id="games-grid">`.
+   - Add abstract SVG or CSS shapes inside the card's `game-card__thumb` div.
+   - Add the `.game-card__thumb--<game-name>` background gradient rule to `arcade/landing.css`.
 
-4. **Add thumbnail shapes** — Inside the card's `game-card__thumb` div, add abstract SVG or CSS shapes that visually represent the game. Look at existing cards in `index.html` for examples. These should have limited motion to keep the page from being too busy.
+4. **Verify locally** — Test the game using `npx -y serve -l 3000` or `python3 -m http.server 3000`. Verify navigation (back link to Arcade, and from Arcade to AI Lab), audio/controls, responsive layout, and that no console errors appear.
