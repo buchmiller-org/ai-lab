@@ -1,4 +1,4 @@
-﻿// ─── Configuration ──────────────────────────────────────────
+// ─── Configuration ──────────────────────────────────────────
 const CANVAS_W        = 400;
 const CANVAS_H        = 600;
 const ORB_RADIUS      = 10;
@@ -56,10 +56,10 @@ function canRestart() {
 
 // ─── High score persistence ────────────────────────────────
 function loadHigh() {
-  try { return parseInt(localStorage.getItem('gravityDropHigh'), 10) || 0; } catch { return 0; }
+  try { return parseInt(localStorage.getItem('arcade.gravity-drop.high-score') || localStorage.getItem('gravityDropHigh'), 10) || 0; } catch { return 0; }
 }
 function saveHigh(v) {
-  try { localStorage.setItem('gravityDropHigh', v); } catch {}
+  try { localStorage.setItem('arcade.gravity-drop.high-score', v); } catch {}
 }
 
 // ─── Canvas sizing ─────────────────────────────────────────

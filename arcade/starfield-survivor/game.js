@@ -14,7 +14,7 @@ const Game = (() => {
   let score = 0;
   let elapsed = 0; // seconds survived
   let grazeCount = 0;
-  let highScore = parseFloat(localStorage.getItem('ss_highScore')) || 0;
+  let highScore = parseFloat(localStorage.getItem('arcade.starfield-survivor.high-score') || localStorage.getItem('ss_highScore')) || 0;
   let lastTime = 0;
   let animFrameId = null;
 
@@ -133,7 +133,7 @@ const Game = (() => {
 
     if (score > highScore) {
       highScore = score;
-      localStorage.setItem('ss_highScore', highScore);
+      try { localStorage.setItem('arcade.starfield-survivor.high-score', highScore); } catch {}
     }
 
     // Populate stats

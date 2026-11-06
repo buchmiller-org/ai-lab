@@ -46,14 +46,18 @@ let lastMenuSource = null;
 // --- Initialization ---
 
 function loadProgress() {
-  const data = localStorage.getItem('gridLock_progress');
-  if (data) {
-    savedProgress = JSON.parse(data);
-  }
+  try {
+    const data = localStorage.getItem('arcade.grid-lock.progress') || localStorage.getItem('gridLock_progress');
+    if (data) {
+      savedProgress = JSON.parse(data);
+    }
+  } catch {}
 }
 
 function saveProgress() {
-  localStorage.setItem('gridLock_progress', JSON.stringify(savedProgress));
+  try {
+    localStorage.setItem('arcade.grid-lock.progress', JSON.stringify(savedProgress));
+  } catch {}
 }
 
 function initGame() {

@@ -1,5 +1,7 @@
 # Roguelite Game Concepts
 
+**Status:** Idea  
+
 Here are a few creative directions for a **roguelite** game that step outside the typical fighting/deck-building/hack'n'slash genres. They maintain the "choose 1 of 3 upgrades" mid-run mechanic and feature meta-progression (permanent upgrades that persist after each run's death/failure).
 
 ---

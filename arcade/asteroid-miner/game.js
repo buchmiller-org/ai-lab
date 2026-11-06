@@ -6,7 +6,7 @@
   'use strict';
 
   // ─── Config ───────────────────────────────────────────
-  const SAVE_KEY = 'asteroid_miner_save';
+  const SAVE_KEY = 'arcade.asteroid-miner.save';
   const TICK_MS  = 100;  // idle tick every 100ms
   const AUTOSAVE_MS = 5000;
 
@@ -416,7 +416,7 @@
 
   function load() {
     try {
-      const raw = localStorage.getItem(SAVE_KEY);
+      const raw = localStorage.getItem(SAVE_KEY) || localStorage.getItem('asteroid_miner_save');
       if (!raw) return;
       const saved = JSON.parse(raw);
       // Merge with fresh state to handle missing fields from older saves

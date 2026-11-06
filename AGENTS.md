@@ -37,17 +37,26 @@ It serves as a parent hub for diverse, independent web experiments, tools, visua
    - Never import stylesheets, scripts, or assets across sibling project suites (e.g., a tool or sandbox prototype should never link to `../arcade/styles.css` or root `styles.css`).
    - **Exception:** Subprojects within a suite may import that suite's shared stylesheet if one exists (specifically, games inside `arcade/<game>/` link to their suite's shared `../styles.css`). Sandbox prototypes and standalone tools do not share a suite stylesheet and remain strictly self-contained.
 
+5. **Origin-Shared Storage Namespacing (`localStorage`)**
+   - Because `localStorage` is scoped to the entire origin domain, projects sharing the domain must namespace keys: `<suite>.<project-name>.<key>`.
+   - Arcade games must use: `arcade.<game-name>.<key>` (e.g. `arcade.neon-snake.high-score`).
+   - Sandbox prototypes must use: `sandbox.<prototype-name>.<key>`.
+   - Standalone tools must use: `tool.<tool-name>.<key>`.
+   - Always wrap storage calls in `try...catch` blocks to protect against private browsing modes or quota errors.
+
 ---
 
 ## Designing New Pages & Standalone Projects
 
 When the user asks for a new webpage, tool, prototype, or game, use this decision table:
 
-| What you are building | Location | Visual styling | Template / Baseline | Back link | Registration |
+| What you are building | Location | Visual styling | Starter Template | Back link | Registration |
 | --- | --- | --- | --- | --- | --- |
-| **Retro / arcade game** | `arcade/<game-name>/` | Neon / cyberpunk glow, Orbitron + Inter, canvas/game loop | Existing games or `.templates/` (see [`arcade/AGENTS.md`](arcade/AGENTS.md)) | `← Back to Arcade` (`href="../"`) | Add card to `arcade/index.html` + thumb gradient in `arcade/landing.css` |
-| **Gameplay prototype / tech demo** | `sandbox/<prototype-name>/` | Theme-agnostic, mechanic-focused; single-file prototypes allowed | [`sandbox/AGENTS.md`](sandbox/AGENTS.md) (check `_ideas/` for GDD) | `← Back to Sandbox` (`href="../"`) | Add card to `sandbox/index.html` |
-| **Standalone tool / utility / visualizer** | `tools/<tool-name>/` | Clean modern UI (system fonts, Inter, Tailwind via CDN); no arcade neon | [`.templates/tool/index.html`](.templates/tool/index.html) | `← Back to AI Lab` (`href="../../"` or relative path) | If introducing `tools/`, replace placeholder card in root [`index.html`](index.html) |
+| **Retro / arcade game** | `arcade/<game-name>/` | Neon / cyberpunk glow, Orbitron + Inter, canvas/game loop | [`.templates/arcade-game/`](.templates/arcade-game/) (see [`arcade/AGENTS.md`](arcade/AGENTS.md)) | `← Back to Arcade` (`href="../"`) | Add card to `arcade/index.html` + thumb gradient in `arcade/landing.css` |
+| **Gameplay prototype / tech demo** | `sandbox/<prototype-name>/` | Theme-agnostic, mechanic-focused; single-file prototypes allowed | [`.templates/sandbox-prototype/`](.templates/sandbox-prototype/) (see [`sandbox/AGENTS.md`](sandbox/AGENTS.md)) | `← Back to Sandbox` (`href="../"`) | Add card to `sandbox/index.html` (check `_ideas/` for GDD) |
+| **Standalone tool / utility / visualizer** | `tools/<tool-name>/` | Clean modern UI (system fonts, Inter, Tailwind via CDN); no arcade neon | [`.templates/tool/index.html`](.templates/tool/index.html) (single-file allowed) | `← Back to AI Lab` (`href="../../"` or relative path) | If introducing `tools/`, replace placeholder card in root [`index.html`](index.html) |
+
+> **Single-File vs. Multi-File Convention:** Arcade games require separate `style.css` and `game.js`. In contrast, standalone tools and sandbox prototypes are permitted to use single-file HTML (inline `<style>` and `<script>` in `index.html`) as an intentional exception for compact utilities and rapid experiments, or split into `style.css` and `app.js`/`main.js` as complexity warrants.
 
 ### Registering `tools/` on the Root Hub (`index.html`)
 
@@ -81,6 +90,35 @@ When creating or modifying pages outside of `arcade/`, **do NOT copy patterns fr
   - If a page is an independent tool or experiment: link back to AI Lab with "← Back to AI Lab" (`href="../"` or appropriate relative path).
 - ⛔ **Do NOT add non-arcade projects to `arcade/index.html`.** Only add projects to `arcade/index.html` if they belong to The Arcade game suite.
 - ⛔ **Do NOT replicate the arcade card grid or hover filters** unless specifically building for The Arcade.
+
+---
+
+## Project Lifecycle: _ideas/ → Sandbox → Arcade Graduation
+
+Projects in `ai-lab` typically progress through three lifecycle stages:
+
+1. **Idea Stage (`_ideas/`):**
+   - Game design documents (GDDs), feature specs, and raw concepts reside in `_ideas/`.
+   - Every idea doc starts with a standardized status line at the top:
+     `Status: Idea`
+   - Idea documents stay in `_ideas/` permanently; they are not deleted when code is written.
+
+2. **Prototyping Stage (`sandbox/`):**
+   - When ready to validate gameplay loops, physics, or controls, create an experimental prototype under `sandbox/<prototype-name>/` (scaffold from [`.templates/sandbox-prototype/`](.templates/sandbox-prototype/) or use a single-file `index.html`).
+   - Register the prototype card in `sandbox/index.html`.
+   - Update the idea document's top status line:
+     `Status: Prototyping (sandbox/<prototype-name>/)`
+
+3. **Shipped Stage (`arcade/` or `tools/`):**
+   - **When to promote:** Once mechanics are proven fun, controls feel right, and the game is ready for full polish and suite identity.
+   - **Graduating to The Arcade:**
+     1. Scaffold `arcade/<game-name>/` from [`.templates/arcade-game/`](.templates/arcade-game/).
+     2. Elevate visual styling to Arcade neon aesthetics, Orbitron typography, sound effects, and responsive mobile controls.
+     3. Ensure `localStorage` uses the `arcade.<game-name>.<key>` convention.
+     4. Register the game card and thumbnail in `arcade/index.html` and `arcade/landing.css`.
+     5. Update the idea document's status line in `_ideas/`:
+        `Status: Shipped (arcade/<game-name>/)`
+     6. The design doc remains in `_ideas/` as the canonical living specification and historical record.
 
 ---
 

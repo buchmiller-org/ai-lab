@@ -92,13 +92,13 @@
   // --- Load best score from localStorage ---
   function loadBest() {
     try {
-      state.bestScore = parseInt(localStorage.getItem('glyphDecoder_best') || '0', 10);
+      state.bestScore = parseInt(localStorage.getItem('arcade.glyph-decoder.best-score') || localStorage.getItem('glyphDecoder_best') || '0', 10);
     } catch { state.bestScore = 0; }
   }
 
   function saveBest() {
     try {
-      localStorage.setItem('glyphDecoder_best', String(state.bestScore));
+      localStorage.setItem('arcade.glyph-decoder.best-score', String(state.bestScore));
     } catch { /* ignore */ }
   }
 

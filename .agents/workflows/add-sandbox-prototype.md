@@ -10,26 +10,18 @@ description: How to add a new experimental prototype to The Sandbox
 
 1. **Check for Design Specs**
    - Check the `_ideas/` folder at the repo root to see if an idea doc or GDD already exists for this concept. Review the core loop, state machines, and intended controls.
+   - If an idea doc exists, update its status line at the top to `Status: Prototyping (sandbox/<prototype-name>/)`.
 
-2. **Create the Prototype Directory**
-   - Create a new kebab-case directory under `sandbox/` (e.g. `sandbox/gravity-puzzle/`).
+2. **Copy the Starter Template (or Create Single-File Prototype)**
+   - Copy `.templates/sandbox-prototype/` to `sandbox/<prototype-name>/` (kebab-case directory name, e.g. `sandbox/gravity-puzzle/`).
+   - *Alternative:* For rapid proof-of-concepts or game jams, single-file prototypes (`index.html` containing inline `<style>` and `<script>`) are completely allowed and encouraged.
 
-3. **Create `index.html`**
-   - Inside `sandbox/<prototype-name>/`, create `index.html`.
-   - Include standard `<meta charset="UTF-8">` and viewport meta tags.
-   - Set the `<title>` format: `Prototype Name — Sandbox`.
-   - Add the back link to Sandbox:
-     ```html
-     <a href="../" class="back-link">← Back to Sandbox</a>
-     ```
-   - Import necessary CDN dependencies (e.g., Phaser, Pixi, Three.js, p5.js, Howler.js).
-   - Keep styles in a local `style.css` or concise `<style>` block. Single-file prototypes (HTML + `<style>` + `<script>` combined in `index.html`) are completely allowed for quick tests.
+3. **Customize Prototype Files**
+   - `index.html`: Update `<title>` format (`<Prototype Name> — Sandbox`), `<meta name="description">`, and prototype title in the header. Ensure back link points to `../` (`← Back to Sandbox`).
+   - `style.css`: Clean, theme-agnostic styling suited to the prototype (avoid copying arcade Orbitron/neon glow unless intentionally testing that style).
+   - `main.js`: Implement experimental mechanics, canvas loop, or import CDN libraries (e.g., Phaser, Pixi, Three.js, p5.js, Howler.js).
 
-4. **Implement the Prototype Logic**
-   - For rapid experiments or single-file prototypes, write script logic directly in `<script>` tags or a single `main.js`/`game.js`.
-   - For larger prototypes with entities, states, or UI, split into focused files (e.g. `gameState.js`, `entities.js`, `ui.js`) loaded via `<script>` tags.
-
-5. **Register Card in `sandbox/index.html`**
+4. **Register Card in `sandbox/index.html`**
    - Open `sandbox/index.html`.
    - Add a card inside `<div class="prototype-grid">`:
      ```html
@@ -42,6 +34,32 @@ description: How to add a new experimental prototype to The Sandbox
      </a>
      ```
 
-6. **Verify Navigation & Gameplay**
+5. **Verify Locally**
    - Test locally with `npx -y serve -l 3000` or `python3 -m http.server 3000`.
-   - Verify that clicking "← Back to Sandbox" takes you back to `sandbox/index.html`, and from there back to AI Lab.
+   - Complete the Definition of Done checklist below.
+
+
+## Definition of Done
+
+Before marking the task complete, verify each item:
+
+- [ ] **Starter template copied or single-file prototype created:** Built from `.templates/sandbox-prototype/` or concise single-file `index.html`.
+- [ ] **Landing page card registered:** Card markup added inside `<div class="prototype-grid">` in `sandbox/index.html`.
+- [ ] **Relative links verified:**
+  - Back link (`href="../"`) navigates to `sandbox/index.html`.
+  - Local assets use relative paths (`./style.css`, `./main.js`).
+  - No domain-root absolute paths (`href="/..."`, `src="/..."`).
+- [ ] **Page metadata complete:**
+  - `<title>` matches `<Prototype Name> — Sandbox`.
+  - `<meta name="description">` is present and descriptive.
+  - Viewport `<meta>` tag is present and responsive.
+- [ ] **Theme-agnostic & isolated:**
+  - Styling is tailored to the prototype, avoiding accidental arcade styling (no Orbitron / neon glow defaults).
+  - No cross-project asset leaks (does not import `../arcade/styles.css` or root `styles.css`).
+  - No CSS `@import` used for fonts.
+- [ ] **Idea doc status updated:**
+  - If originating from `_ideas/`, document status line updated to `Status: Prototyping (sandbox/<prototype-name>/)`.
+- [ ] **Clean console:**
+  - No JavaScript runtime errors, unhandled exceptions, or missing asset 404s in the browser devtools.
+- [ ] **Mobile viewport & responsive check:**
+  - Layout scales properly and interactive controls are usable on mobile and desktop viewports.

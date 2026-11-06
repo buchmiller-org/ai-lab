@@ -1,5 +1,6 @@
 # Starport Jam — Game Concept
 
+**Status:** Prototyping (`sandbox/starport-jam/`)  
 **Genre:** Puzzle / Sorting ("Jam" mechanic)  
 **Setting:** Sci-Fi spaceport, bright flat-cartoon aesthetic  
 **Match Length:** 2-5 minutes per level  

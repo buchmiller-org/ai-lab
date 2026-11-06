@@ -19,7 +19,7 @@ window.TS = window.TS || {};
     placingType: null, selectedTower: null, hoverCell: null,
     waveManager: null,
     waveActive: false,
-    best: parseInt(localStorage.getItem('ts_best') || '0')
+    best: parseInt(localStorage.getItem('arcade.tower-surge.best-score') || localStorage.getItem('ts_best') || '0', 10)
   };
 
   /* ---- DOM refs ---- */
@@ -82,11 +82,14 @@ window.TS = window.TS || {};
       credits: S.credits, coreHp: S.coreHp, score: S.score, kills: S.kills, wave: S.waveManager.currentWave,
       towers: S.towers.map(function(t) { return {col: t.col, row: t.row, type: t.type, level: t.level}; })
     };
-    localStorage.setItem('ts_save', JSON.stringify(saveObj));
+    try { localStorage.setItem('arcade.tower-surge.save', JSON.stringify(saveObj)); } catch(e) {}
   }
 
   function loadProgress() {
-    var saveStr = localStorage.getItem('ts_save');
+    var saveStr = null;
+    try {
+      saveStr = localStorage.getItem('arcade.tower-surge.save') || localStorage.getItem('ts_save');
+    } catch(e) {}
     if (!saveStr) return false;
     try {
       var save = JSON.parse(saveStr);
@@ -104,7 +107,12 @@ window.TS = window.TS || {};
     } catch(e) { return false; }
   }
 
-  function clearSave() { localStorage.removeItem('ts_save'); }
+  function clearSave() {
+    try {
+      localStorage.removeItem('arcade.tower-surge.save');
+      localStorage.removeItem('ts_save');
+    } catch(e) {}
+  }
   function trySave() { if (!S.waveActive && S.phase === 'playing') saveProgress(); }
 
   /* ============ INPUT ============ */
@@ -375,7 +383,10 @@ window.TS = window.TS || {};
   function gameOver() {
     clearSave();
     S.phase = 'gameover';
-    if (S.score > S.best) { S.best = S.score; localStorage.setItem('ts_best', S.best); }
+    if (S.score > S.best) {
+      S.best = S.score;
+      try { localStorage.setItem('arcade.tower-surge.best-score', S.best); } catch(e) {}
+    }
     document.getElementById('go-score').textContent = S.score;
     document.getElementById('go-wave').textContent = S.waveManager.currentWave;
     document.getElementById('go-kills').textContent = S.kills;

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="description" content="Game Title — classic retro neon arcade action in your browser.">
+  <title>Game Title — Arcade</title>
+
+  <!-- Google Fonts: Orbitron (headers) & Inter (UI) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap">
+
+  <!-- Shared Arcade Design System -->
+  <link rel="stylesheet" href="../styles.css">
+
+  <!-- Shared Favicon Snippet (change emoji as appropriate) -->
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>">
+
+  <!-- Game-Specific Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Shared animated arcade background -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="orb orb--1" aria-hidden="true"></div>
+  <div class="orb orb--2" aria-hidden="true"></div>
+
+  <div class="page-wrapper">
+
+    <!-- Standard Arcade Header with Back Link -->
+    <header class="arcade-header">
+      <a href="../" class="back-link">← Back to Arcade</a>
+      <h1 class="arcade-header__title arcade-header__title--gradient">Game Title</h1>
+    </header>
+
+    <!-- Main Game Area -->
+    <main class="game-container">
+      <!-- HUD / Score Board -->
+      <div class="hud">
+        <div class="hud__item">
+          <span class="hud__label">SCORE</span>
+          <span class="hud__value" id="hud-score">0</span>
+        </div>
+        <div class="hud__item">
+          <span class="hud__label">BEST</span>
+          <span class="hud__value" id="hud-high">0</span>
+        </div>
+      </div>
+
+      <!-- Canvas & Overlay Container -->
+      <div class="canvas-wrap">
+        <canvas id="game-canvas" width="800" height="600"></canvas>
+
+        <!-- Start Overlay -->
+        <div class="overlay overlay--visible" id="overlay-start">
+          <div class="overlay__content">
+            <h2 class="overlay__title">Game Title</h2>
+            <p class="overlay__desc">Short description of controls or instructions.</p>
+            <button class="arcade-btn" id="btn-start">Press Space or Tap to Play</button>
+          </div>
+        </div>
+
+        <!-- Game Over Overlay -->
+        <div class="overlay overlay--hidden" id="overlay-gameover">
+          <div class="overlay__content">
+            <h2 class="overlay__title">GAME OVER</h2>
+            <p class="overlay__stat">Final Score: <span id="final-score">0</span></p>
+            <p class="overlay__stat" id="new-high-notice" style="display: none;">★ NEW HIGH SCORE! ★</p>
+            <button class="arcade-btn" id="btn-restart">Play Again</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Game Scripts (split into multiple files if complexity grows) -->
+  <script src="game.js"></script>
+
+</body>
+
+</html>

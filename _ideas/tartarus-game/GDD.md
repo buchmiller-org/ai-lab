@@ -1,5 +1,7 @@
 # TARTARUS — Game Design Document
 
+**Status:** Prototyping (`sandbox/tartarus/`)  
+
 > *"Drill faster for profit. Drill slower to survive."*
 
 **TARTARUS** is a roguelite survival game for the web browser. You are an AI Overseer commanding a disposable mining rig on a hostile alien planet. Your objective: drill through six geological zones to reach and extract a Kyloric Geode Core — while the planet's insectoid inhabitants do everything they can to stop you.

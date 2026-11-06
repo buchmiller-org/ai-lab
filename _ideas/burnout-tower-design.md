@@ -1,7 +1,8 @@
 # Burnout Tower — Game Design Document (v3)
 
-**Working Title:** *Burnout Tower*
-**Genre:** Roguelite Action-Survival
+**Status:** Prototyping (`sandbox/burnout-tower/`)  
+**Working Title:** *Burnout Tower*  
+**Genre:** Roguelite Action-Survival  
 
 ---
 

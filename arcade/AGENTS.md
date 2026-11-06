@@ -107,6 +107,36 @@ Keep these hover styling gotchas in mind:
 - **`backdrop-filter` + `::before` glow conflict:** The card has `backdrop-filter: blur(16px)` which blurs the `::before` gradient behind it, causing color bleed. On hover, `backdrop-filter: none` is set to prevent this.
 - **Opaque card body on hover:** `.game-card__body` must have a solid background on hover so the gradient glow only frames the card edges.
 
-## Workflows
+---
 
-See `.agents/workflows/add-arcade-game.md` for the step-by-step checklist.
+## LocalStorage Key Convention
+
+`localStorage` is shared across the entire origin (all subprojects on `ai-lab`). To prevent key collisions across games, prototypes, and tools:
+
+- **Always namespace keys:** `arcade.<game-name>.<key>`
+- **Standard examples:**
+  - `arcade.neon-snake.high-score`
+  - `arcade.bit-breaker.best-score`
+  - `arcade.tower-surge.save`
+  - `arcade.grid-lock.progress`
+- Always wrap `localStorage` access in `try...catch` blocks to protect against private browsing restrictions or storage quota errors.
+
+---
+
+## Starter Template & Workflows
+
+Always start new arcade games by copying the starter template:
+- **Starter Template:** [`.templates/arcade-game/`](../.templates/arcade-game/) (`index.html`, `style.css`, `game.js`).
+- **Step-by-Step Workflow:** [`.agents/workflows/add-arcade-game.md`](../.agents/workflows/add-arcade-game.md).
+
+---
+
+## Graduating a Prototype from Sandbox to Arcade
+
+When promoting an experimental prototype from `sandbox/` to `arcade/`:
+1. Copy `.templates/arcade-game/` to `arcade/<game-name>/`.
+2. Port validated mechanics into `game.js`, elevating visuals to the Arcade neon/cyberpunk aesthetic, Orbitron typography, and responsive HUD.
+3. Namespace persistence keys using `arcade.<game-name>.<key>`.
+4. Register the new game card in `arcade/index.html` and thumbnail gradient in `arcade/landing.css`.
+5. If the game originated from a document in `_ideas/`, update its top status line to `Status: Shipped (arcade/<game-name>/)`. The idea doc stays in `_ideas/` as the canonical design record.
+

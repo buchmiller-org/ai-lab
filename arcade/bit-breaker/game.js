@@ -27,7 +27,7 @@ let lastTime = 0;
 let score = 0;
 let level = 1;
 let lives = 3;
-let bestScore = parseInt(localStorage.getItem('bitBreakerBestScore')) || 0;
+let bestScore = parseInt(localStorage.getItem('arcade.bit-breaker.best-score') || localStorage.getItem('bitBreakerBestScore')) || 0;
 bestScoreDisplay.textContent = bestScore;
 let comboMultiplier = 1;
 let consecutiveHits = 0;
@@ -206,7 +206,7 @@ function loseLife() {
   if (lives <= 0) {
     if (score > bestScore) {
       bestScore = score;
-      localStorage.setItem('bitBreakerBestScore', bestScore);
+      localStorage.setItem('arcade.bit-breaker.best-score', bestScore);
       bestScoreDisplay.textContent = bestScore;
     }
     gameState = 'GAME_OVER';

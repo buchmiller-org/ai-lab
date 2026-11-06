@@ -33,6 +33,8 @@ ai-lab/
 ├── .agents/
 │   └── workflows/          # Step-by-step procedures for AI coding agents
 ├── .templates/
+│   ├── arcade-game/        # Starter template for arcade games
+│   ├── sandbox-prototype/  # Starter template for sandbox prototypes
 │   └── tool/               # Starter template for standalone utilities
 ├── _ideas/                 # Game design documents (GDDs) & mechanics specs
 ├── arcade/

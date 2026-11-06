@@ -19,7 +19,7 @@
   const newBestEl = document.getElementById('new-best');
 
   // --- Constants ---
-  const STORAGE_KEY = 'parallax-runner-high';
+  const STORAGE_KEY = 'arcade.parallax-runner.high-score';
   const BASE_SPEED = 1.8;
   const SPEED_RAMP = 0.0003; // per frame
   const GRAVITY = 0.45;
@@ -53,7 +53,7 @@
   let W, H, groundY, playerX;
   let state = 'start'; // start | playing | gameover
   let score = 0;
-  let highScore = parseInt(localStorage.getItem(STORAGE_KEY)) || 0;
+  let highScore = parseInt(localStorage.getItem(STORAGE_KEY) || localStorage.getItem('parallax-runner-high')) || 0;
   let speed = BASE_SPEED;
   let activeLayer = 1; // 0=far, 1=mid, 2=near
   let frameCount = 0;

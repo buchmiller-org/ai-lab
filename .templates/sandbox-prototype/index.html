@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prototype Title — Sandbox</title>
+  <meta name="description" content="Interactive prototype testing experimental mechanics and game systems.">
+
+  <!-- Clean, theme-agnostic styling (see style.css) -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <div class="prototype-container">
+    <!-- Header with Back to Sandbox link -->
+    <header class="prototype-header">
+      <a href="../" class="back-link">← Back to Sandbox</a>
+      <div class="prototype-header__title-row">
+        <h1 class="prototype-title">Prototype Title</h1>
+        <span class="badge">PROTOTYPE</span>
+      </div>
+      <p class="prototype-desc">A brief summary of the mechanics or hypothesis being tested.</p>
+    </header>
+
+    <!-- Main Interactive Area (Canvas, DOM elements, or WebGL) -->
+    <main class="prototype-main">
+      <div class="canvas-wrapper">
+        <canvas id="prototype-canvas" width="800" height="500"></canvas>
+      </div>
+
+      <!-- Controls / Debug Panel -->
+      <section class="controls-panel">
+        <div class="controls-info">
+          <strong>Controls:</strong> <span id="controls-text">WASD / Arrow Keys to move, Space to interact</span>
+        </div>
+        <div class="debug-readout" id="debug-readout">
+          Status: Ready | Entities: 0 | FPS: --
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="prototype-footer">
+      <p>The Sandbox · <a href="../">All Prototypes</a> · <a href="../../">AI Lab</a></p>
+    </footer>
+  </div>
+
+  <!-- Prototype Logic (or combine into a single index.html file for rapid experiments) -->
+  <script src="main.js"></script>
+
+</body>
+
+</html>

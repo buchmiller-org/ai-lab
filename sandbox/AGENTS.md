@@ -22,11 +22,12 @@ Sandbox-specific additions:
 
 ---
 
-## Relationship to `_ideas/`
+## Relationship to `_ideas/` & Lifecycle Tracking
 
 Many prototypes in the sandbox originate from design documents located in the `_ideas/` directory at the repository root:
 - Check `_ideas/` for relevant design notes, economy spreadsheets, or game design documents (GDDs) before building or updating a prototype.
-- When creating a prototype based on an idea doc, review the core mechanics and player verbs outlined in the doc.
+- When creating a prototype based on an idea doc, update the status line at the top of the idea doc to: `Status: Prototyping (sandbox/<prototype-name>/)`.
+- When mechanics are validated and the game is promoted to The Arcade, the idea doc remains in `_ideas/` as the canonical spec, with its status updated to `Status: Shipped (arcade/<game-name>/)`.
 
 ---
 
@@ -35,8 +36,9 @@ Many prototypes in the sandbox originate from design documents located in the `_
 Each prototype (`sandbox/<prototype-name>/index.html`) should:
 
 1. **Be self-contained** within its folder (`sandbox/<prototype-name>/`).
-2. **Structure flexibility (Single-file vs. Multi-file):**
-   - **Single-file prototypes are fully allowed** and encouraged for fast proof-of-concepts, game jams, or isolated mechanics experiments (e.g., `castle-siege` and `optics/*`, where HTML, `<style>`, and `<script>` are in one `index.html`).
+2. **Starter Template & Structure Flexibility (Single-file vs. Multi-file):**
+   - **Starter Template:** Multi-file prototypes should be scaffolded by copying [`.templates/sandbox-prototype/`](../.templates/sandbox-prototype/) (`index.html`, `style.css`, `main.js`).
+   - **Single-file prototypes are fully allowed** and encouraged for fast proof-of-concepts, game jams, or isolated mechanics experiments (e.g., `castle-siege` and `optics/*`, where HTML, `<style>`, and `<script>` are combined in `index.html`).
    - **Multi-file prototypes** (`index.html`, `style.css`, and modular JS files like `gameState.js`, `entities.js`, `spawner.js`) are recommended when mechanics grow in scope or complexity (e.g., `tartarus`).
 3. Include standard HTML5 meta tags (`<meta charset="UTF-8">`, responsive viewport).
 4. Include a descriptive `<title>`: `Prototype Name — Sandbox`.
@@ -44,6 +46,7 @@ Each prototype (`sandbox/<prototype-name>/index.html`) should:
    ```html
    <a href="../" class="back-link">← Back to Sandbox</a>
    ```
+6. **LocalStorage Namespacing:** If persisting progress or settings, use `sandbox.<prototype-name>.<key>`.
 
 ---
 
@@ -60,5 +63,15 @@ Whenever a new prototype is created, a card **must** be added to `sandbox/index.
   </div>
 </a>
 ```
+
+---
+
+## Graduating to The Arcade
+
+When a prototype proves its core mechanics and is selected for full production in The Arcade:
+1. Promote by copying `.templates/arcade-game/` into `arcade/<game-name>/`.
+2. Port mechanics to Arcade standards (Orbitron/neon aesthetics, HUD, sound/juice, responsive viewport).
+3. Update the idea doc in `_ideas/` to `Status: Shipped (arcade/<game-name>/)`.
+4. Register the new game card in `arcade/index.html` and thumbnail in `arcade/landing.css`.
 
 See `.agents/workflows/add-sandbox-prototype.md` for the step-by-step checklist.

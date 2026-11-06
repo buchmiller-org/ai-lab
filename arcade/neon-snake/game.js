@@ -1,4 +1,4 @@
-﻿// ─── Configuration ──────────────────────────────────────────
+// ─── Configuration ──────────────────────────────────────────
 const GRID_COUNT  = 20;        // cells per axis
 const BASE_SPEED  = 140;       // ms per tick at start
 const MIN_SPEED   = 60;        // fastest tick
@@ -34,10 +34,10 @@ let animId;
 
 // ─── High score persistence ────────────────────────────────
 function loadHigh() {
-  try { return parseInt(localStorage.getItem('neonSnakeHigh'), 10) || 0; } catch { return 0; }
+  try { return parseInt(localStorage.getItem('arcade.neon-snake.high-score') || localStorage.getItem('neonSnakeHigh'), 10) || 0; } catch { return 0; }
 }
 function saveHigh(v) {
-  try { localStorage.setItem('neonSnakeHigh', v); } catch {}
+  try { localStorage.setItem('arcade.neon-snake.high-score', v); } catch {}
 }
 
 // ─── Canvas sizing ─────────────────────────────────────────

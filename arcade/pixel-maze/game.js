@@ -24,7 +24,7 @@ const COLOR_PLAYER = '#06d6a0';
 const COLOR_EXIT = '#f472b6';
 
 let currentLevel = 1;
-const levelKey = 'aiGames_pixelMaze_highestLevel';
+const levelKey = 'arcade.pixel-maze.highest-level';
 
 let maze;
 let player;
@@ -32,15 +32,19 @@ let exitPos;
 let w, h;
 
 function getHighestLevel() {
-  const saved = localStorage.getItem(levelKey);
-  return saved ? parseInt(saved, 10) : 1;
+  try {
+    const saved = localStorage.getItem(levelKey) || localStorage.getItem('aiGames_pixelMaze_highestLevel');
+    return saved ? parseInt(saved, 10) : 1;
+  } catch { return 1; }
 }
 
 function saveHighestLevel(level) {
-  const highest = getHighestLevel();
-  if (level > highest) {
-    localStorage.setItem(levelKey, level.toString());
-  }
+  try {
+    const highest = getHighestLevel();
+    if (level > highest) {
+      localStorage.setItem(levelKey, level.toString());
+    }
+  } catch {}
 }
 
 function getGridSize(level) {
@@ -390,7 +394,10 @@ btnStart.addEventListener('click', () => {
 });
 
 btnReset.addEventListener('click', () => {
-  localStorage.removeItem(levelKey);
+  try {
+    localStorage.removeItem(levelKey);
+    localStorage.removeItem('aiGames_pixelMaze_highestLevel');
+  } catch {}
   currentLevel = 1;
   startLevelText.textContent = `Resume from Level 1`;
   startLevel();

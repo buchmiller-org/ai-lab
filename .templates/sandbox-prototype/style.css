@@ -1,0 +1,155 @@
+/* ============================================
+   The Sandbox — Prototype Stylesheet
+   Theme-agnostic, zero-dependency starter styling
+   ============================================ */
+
+:root {
+  --bg-color: #0b0f19;
+  --panel-bg: #131b2e;
+  --panel-border: #1f293d;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --accent-color: #38bdf8;
+  --accent-hover: #0284c7;
+  --radius: 8px;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  min-height: 100vh;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+}
+
+.prototype-container {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+}
+
+/* --- Back Link & Header --- */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  margin-bottom: 12px;
+  transition: color 0.15s ease;
+}
+
+.back-link:hover {
+  color: var(--accent-color);
+}
+
+.prototype-header__title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.prototype-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent-color);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  text-transform: uppercase;
+}
+
+.prototype-desc {
+  margin-top: 6px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+/* --- Main Canvas & Controls --- */
+.prototype-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.canvas-wrapper {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: #060910;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+#prototype-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.controls-panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.875rem;
+}
+
+.controls-info {
+  color: var(--text-main);
+}
+
+.debug-readout {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* --- Footer --- */
+.prototype-footer {
+  margin-top: auto;
+  padding-top: 24px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.prototype-footer a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.prototype-footer a:hover {
+  color: var(--accent-color);
+}

@@ -1,5 +1,6 @@
 # Castle Siege — Game Concept
 
+**Status:** Prototyping (`sandbox/castle-siege/`)  
 **Genre:** Lane Defense / Tug-of-War  
 **Setting:** Medieval, flat 2D side-view  
 **Match Length:** ~2 minutes  

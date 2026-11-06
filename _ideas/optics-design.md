@@ -1,6 +1,7 @@
 # Optics — Game Design Document (v1)
 
-**Title:** *Optics*
+**Status:** Prototyping (`sandbox/optics/`)  
+**Title:** *Optics*  
 **Genre:** Corporate satire / Oregon Trail-style resource management RPG
 **Tagline:** *The art of looking busy.*
 
