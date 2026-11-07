@@ -60,10 +60,16 @@
    * (symplectic, time-reversible: good energy behaviour for orbits).
    */
   Physics.stepVerlet = function (p, bodies, dt) {
+    // Optional per-body gravity multiplier (e.g. heavy ordnance feels wells more).
+    const g = p.gScale === undefined ? 1 : p.gScale;
     Physics.accelerationAt(p.x, p.y, bodies, _a0);
+    _a0.x *= g;
+    _a0.y *= g;
     p.x += p.vx * dt + 0.5 * _a0.x * dt * dt;
     p.y += p.vy * dt + 0.5 * _a0.y * dt * dt;
     Physics.accelerationAt(p.x, p.y, bodies, _a1);
+    _a1.x *= g;
+    _a1.y *= g;
     p.vx += 0.5 * (_a0.x + _a1.x) * dt;
     p.vy += 0.5 * (_a0.y + _a1.y) * dt;
     const sp = Math.hypot(p.vx, p.vy);

@@ -41,34 +41,69 @@
 
     <!-- Main Game Area -->
     <main class="game-container">
-      <!-- HUD -->
+      <!-- HUD: health + score per player -->
       <div class="hud">
-        <div class="hud__item">
-          <span class="hud__label">ANGLE</span>
-          <span class="hud__value" id="hud-angle">--</span>
+        <div class="hud__player hud__player--p1" id="hud-p1">
+          <div class="hud__row"><span class="hud__name">P1</span><span class="hud__score" id="score-p1">0</span></div>
+          <div class="hpbar"><div class="hpbar__fill" id="hp-p1"></div><span class="hpbar__text" id="hp-text-p1">100</span></div>
         </div>
-        <div class="hud__item hud__item--center">
-          <span class="hud__label">SHOOTER</span>
-          <span class="hud__value" id="hud-shooter">P1</span>
+        <div class="hud__center">
+          <span class="hud__label" id="hud-round">ROUND 1</span>
+          <span class="hud__value" id="hud-turn">P1</span>
         </div>
-        <div class="hud__item">
-          <span class="hud__label">POWER</span>
-          <span class="hud__value" id="hud-power">--</span>
+        <div class="hud__player hud__player--p2" id="hud-p2">
+          <div class="hud__row"><span class="hud__score" id="score-p2">0</span><span class="hud__name">P2</span></div>
+          <div class="hpbar"><div class="hpbar__fill" id="hp-p2"></div><span class="hpbar__text" id="hp-text-p2">100</span></div>
         </div>
       </div>
 
       <!-- Canvas Container (scales responsively, 4:3) -->
       <div class="canvas-wrap" id="canvas-wrap">
         <canvas id="game-canvas" width="800" height="600"></canvas>
+        <div class="banner" id="banner" hidden></div>
       </div>
-      <p class="hint">Drag back from anywhere and release to fire &middot; <kbd>S</kbd> switch ship &middot; <kbd>R</kbd> new map</p>
+
+      <!-- Precision controls -->
+      <section class="controls" id="controls" aria-label="Firing controls">
+        <div class="weapons" id="weapons" role="group" aria-label="Weapon"></div>
+        <div class="sliders">
+          <div class="ctl">
+            <label class="ctl__label" for="angle-range">ANGLE <output id="angle-out">0°</output></label>
+            <div class="ctl__row">
+              <button type="button" class="step-btn" data-step="angle" data-delta="-1" aria-label="Angle down">−</button>
+              <input type="range" id="angle-range" min="0" max="360" step="1" value="30">
+              <button type="button" class="step-btn" data-step="angle" data-delta="1" aria-label="Angle up">+</button>
+            </div>
+          </div>
+          <div class="ctl">
+            <label class="ctl__label" for="power-range">POWER <output id="power-out">50%</output></label>
+            <div class="ctl__row">
+              <button type="button" class="step-btn" data-step="power" data-delta="-1" aria-label="Power down">−</button>
+              <input type="range" id="power-range" min="1" max="100" step="1" value="50">
+              <button type="button" class="step-btn" data-step="power" data-delta="1" aria-label="Power up">+</button>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="fire-btn" id="fire-btn">FIRE</button>
+      </section>
+      <p class="hint">Drag back from your ship &amp; release &middot; <kbd>←</kbd><kbd>→</kbd> angle &middot; <kbd>↑</kbd><kbd>↓</kbd> power &middot; <kbd>Space</kbd> fire / split</p>
     </main>
+
+    <!-- Match-over modal -->
+    <div class="modal" id="modal" hidden>
+      <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <h2 class="modal__title" id="modal-title">VICTORY</h2>
+        <p class="modal__text" id="modal-text"></p>
+        <button type="button" class="fire-btn" id="rematch-btn">PLAY AGAIN</button>
+      </div>
+    </div>
 
   </div>
 
   <!-- Game Scripts (split into multiple files if complexity grows) -->
   <script src="physics.js"></script>
   <script src="entities.js"></script>
+  <script src="weapons.js"></script>
   <script src="game.js"></script>
 
 </body>
