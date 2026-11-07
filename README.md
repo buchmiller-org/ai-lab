@@ -21,6 +21,8 @@ Experimental game mechanics, rapid interactive prototypes, and tech demos in act
 Run one of the following cross-platform commands from the project root to serve the site locally at `http://localhost:3000/`:
 
 ```sh
+./scripts/serve.sh
+# or
 npx -y serve -l 3000
 # or
 python3 -m http.server 3000
@@ -32,6 +34,10 @@ python3 -m http.server 3000
 ai-lab/
 ├── .agents/
 │   └── workflows/          # Step-by-step procedures for AI coding agents
+├── .github/
+│   ├── dependabot.yml      # Dependabot version updates for GitHub Actions
+│   └── workflows/
+│       └── deploy.yml      # CI validation & GitHub Pages deployment workflow
 ├── .templates/
 │   ├── arcade-game/        # Starter template for arcade games
 │   ├── sandbox-prototype/  # Starter template for sandbox prototypes
@@ -51,10 +57,16 @@ ai-lab/
 │   ├── index.html          # The Sandbox landing page & prototype grid
 │   ├── style.css           # Sandbox landing page styles
 │   └── <project-name>/     # Each prototype in its own directory (single or multi-file)
+├── scripts/
+│   ├── check.py            # Dependency-free architecture & link validator
+│   ├── new-game.sh         # Scaffolding helper for arcade games
+│   ├── new-prototype.sh    # Scaffolding helper for sandbox prototypes
+│   └── serve.sh            # Local preview server wrapper
 ├── 404.html                # Custom 404 page with dynamic subpath resolution
 ├── AGENTS.md               # Universal agent rules & project taxonomy
 ├── index.html              # AI Lab parent hub landing page
 ├── styles.css              # Root landing page styles
+├── .nojekyll               # Disables Jekyll processing on GitHub Pages
 └── README.md               # Project documentation
 ```
 
@@ -62,3 +74,9 @@ ai-lab/
 
 See [AGENTS.md](AGENTS.md) for universal rules, architectural boundaries, and project taxonomy.
 Check `.agents/workflows/` for step-by-step checklists and procedures specifically designed for AI agents adding arcade games or sandbox prototypes.
+
+Before concluding any task or submitting a pull request, run the validator to ensure all rules pass:
+
+```sh
+python3 scripts/check.py
+```

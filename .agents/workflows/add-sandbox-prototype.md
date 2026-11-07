@@ -12,8 +12,8 @@ description: How to add a new experimental prototype to The Sandbox
    - Check the `_ideas/` folder at the repo root to see if an idea doc or GDD already exists for this concept. Review the core loop, state machines, and intended controls.
    - If an idea doc exists, update its status line at the top to `Status: Prototyping (sandbox/<prototype-name>/)`.
 
-2. **Copy the Starter Template (or Create Single-File Prototype)**
-   - Copy `.templates/sandbox-prototype/` to `sandbox/<prototype-name>/` (kebab-case directory name, e.g. `sandbox/gravity-puzzle/`).
+2. **Scaffold the Starter Template (or Create Single-File Prototype)**
+   - Run `./scripts/new-prototype.sh <prototype-name>` (or copy `.templates/sandbox-prototype/` to `sandbox/<prototype-name>/` with a kebab-case directory name, e.g. `sandbox/gravity-puzzle/`).
    - *Alternative:* For rapid proof-of-concepts or game jams, single-file prototypes (`index.html` containing inline `<style>` and `<script>`) are completely allowed and encouraged.
 
 3. **Customize Prototype Files**
@@ -34,8 +34,9 @@ description: How to add a new experimental prototype to The Sandbox
      </a>
      ```
 
-5. **Verify Locally**
-   - Test locally with `npx -y serve -l 3000` or `python3 -m http.server 3000`.
+5. **Verify Locally & Validate**
+   - Test locally with `./scripts/serve.sh` (or `npx -y serve -l 3000` / `python3 -m http.server 3000`).
+   - Run `python3 scripts/check.py` to verify architecture, links, and metadata.
    - Complete the Definition of Done checklist below.
 
 
@@ -43,6 +44,7 @@ description: How to add a new experimental prototype to The Sandbox
 
 Before marking the task complete, verify each item:
 
+- [ ] **Repository validator passes:** Run `python3 scripts/check.py` with zero errors.
 - [ ] **Starter template copied or single-file prototype created:** Built from `.templates/sandbox-prototype/` or concise single-file `index.html`.
 - [ ] **Landing page card registered:** Card markup added inside `<div class="prototype-grid">` in `sandbox/index.html`.
 - [ ] **Relative links verified:**
