@@ -96,6 +96,21 @@ html, body {
   min-width: 100px;
 }
 
+.back-link {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 2px;
+  letter-spacing: 0.5px;
+  transition: color 0.15s ease;
+}
+
+.back-link:hover {
+  color: var(--cyan);
+}
+
 #top-bar__right {
   text-align: right;
   align-items: flex-end;

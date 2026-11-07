@@ -50,10 +50,10 @@ It serves as a parent hub for diverse, independent web experiments, tools, visua
 
 When the user asks for a new webpage, tool, prototype, or game, use this decision table:
 
-| What you are building | Location | Visual styling | Starter Template | Back link | Registration |
+| What you are building | Location | Visual styling | Starter Template / Helper | Back link | Registration |
 | --- | --- | --- | --- | --- | --- |
-| **Retro / arcade game** | `arcade/<game-name>/` | Neon / cyberpunk glow, Orbitron + Inter, canvas/game loop | [`.templates/arcade-game/`](.templates/arcade-game/) (see [`arcade/AGENTS.md`](arcade/AGENTS.md)) | `← Back to Arcade` (`href="../"`) | Add card to `arcade/index.html` + thumb gradient in `arcade/landing.css` |
-| **Gameplay prototype / tech demo** | `sandbox/<prototype-name>/` | Theme-agnostic, mechanic-focused; single-file prototypes allowed | [`.templates/sandbox-prototype/`](.templates/sandbox-prototype/) (see [`sandbox/AGENTS.md`](sandbox/AGENTS.md)) | `← Back to Sandbox` (`href="../"`) | Add card to `sandbox/index.html` (check `_ideas/` for GDD) |
+| **Retro / arcade game** | `arcade/<game-name>/` | Neon / cyberpunk glow, Orbitron + Inter, canvas/game loop | [`.templates/arcade-game/`](.templates/arcade-game/) or `scripts/new-game.sh <name>` (see [`arcade/AGENTS.md`](arcade/AGENTS.md)) | `← Back to Arcade` (`href="../"`) | Add card to `arcade/index.html` + thumb gradient in `arcade/landing.css` |
+| **Gameplay prototype / tech demo** | `sandbox/<prototype-name>/` | Theme-agnostic, mechanic-focused; single-file prototypes allowed | [`.templates/sandbox-prototype/`](.templates/sandbox-prototype/) or `scripts/new-prototype.sh <name>` (see [`sandbox/AGENTS.md`](sandbox/AGENTS.md)) | `← Back to Sandbox` (`href="../"`) | Add card to `sandbox/index.html` (check `_ideas/` for GDD) |
 | **Standalone tool / utility / visualizer** | `tools/<tool-name>/` | Clean modern UI (system fonts, Inter, Tailwind via CDN); no arcade neon | [`.templates/tool/index.html`](.templates/tool/index.html) (single-file allowed) | `← Back to AI Lab` (`href="../../"` or relative path) | If introducing `tools/`, replace placeholder card in root [`index.html`](index.html) |
 
 > **Single-File vs. Multi-File Convention:** Arcade games require separate `style.css` and `game.js`. In contrast, standalone tools and sandbox prototypes are permitted to use single-file HTML (inline `<style>` and `<script>` in `index.html`) as an intentional exception for compact utilities and rapid experiments, or split into `style.css` and `app.js`/`main.js` as complexity warrants.
@@ -127,9 +127,30 @@ Projects in `ai-lab` typically progress through three lifecycle stages:
 To serve the site locally, run one of the following cross-platform commands from the project root:
 
 ```sh
+./scripts/serve.sh
+# or
 npx -y serve -l 3000
 # or
 python3 -m http.server 3000
 ```
 
 The site will be available locally at `http://localhost:3000/`.
+
+---
+
+## Validation & CI Hardening
+
+Before submitting changes, completing tasks, or opening pull requests, agents **must** run the repository validator:
+
+```sh
+python3 scripts/check.py
+```
+
+The validator runs dependency-free with Python standard library and verifies:
+1. **Subpath Safety:** No domain-root absolute paths (`href="/..."`, `src="/..."`, CSS `url(/...)`).
+2. **Card Synchronization:** Every subfolder in `arcade/` and `sandbox/` has a corresponding card on its landing page, and no orphan cards point to non-existent folders.
+3. **Metadata & Navigation:** Every game and prototype page contains `<title>`, `<meta name="viewport">`, `<meta name="description">` (arcade games), and a valid back link to its suite parent.
+4. **Font Loading Performance:** No CSS `@import` for Google Fonts (must load fonts via HTML `<link>` with `preconnect` to prevent FOUT).
+5. **Project Isolation:** No cross-project asset leaks or forbidden parent references (games only import `../styles.css`; sandbox prototypes remain strictly isolated).
+
+The same checks run automatically via GitHub Actions CI on every pull request and push to `main` before deployment.

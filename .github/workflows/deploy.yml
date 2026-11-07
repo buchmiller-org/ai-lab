@@ -3,6 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -16,7 +18,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Run repository validator
+        run: python3 scripts/check.py
+
   deploy:
+    needs: validate
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -25,11 +43,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prune internal and agent files
+      - name: Build dist (allowlist)
         run: |
-          rm -rf .agents .templates _ideas .jekyllignore
-          find . -name "AGENTS.md" -delete
-          find . -name "README.md" -delete
+          mkdir -p dist
+          # Copy root static assets
+          cp index.html styles.css 404.html dist/
+          [ -f .nojekyll ] && cp .nojekyll dist/ || touch dist/.nojekyll
+          # Copy suites & projects
+          [ -d arcade ] && cp -r arcade dist/
+          [ -d sandbox ] && cp -r sandbox dist/
+          [ -d tools ] && cp -r tools dist/
+          # Remove internal agent instructions inside suites
+          find dist -name "AGENTS.md" -delete
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -37,7 +62,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: dist
 
       - name: Deploy to GitHub Pages
         id: deployment

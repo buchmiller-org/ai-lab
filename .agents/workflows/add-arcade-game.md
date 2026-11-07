@@ -9,7 +9,7 @@ description: How to add a new game to The Arcade
 
 ## Steps
 
-1. **Copy the starter template** — Copy `.templates/arcade-game/` to `arcade/<game-name>/` (kebab-case directory name, e.g. `arcade/space-invaders/`).
+1. **Scaffold the game** — Run `./scripts/new-game.sh <game-name>` (or copy `.templates/arcade-game/` to `arcade/<game-name>/` with a kebab-case directory name, e.g. `arcade/space-invaders/`).
 
 2. **Customize game files**:
    - `index.html`: Update `<title>` (`<Game Name> — Arcade`), `<meta name="description">`, header title, and emoji favicon.
@@ -25,13 +25,14 @@ description: How to add a new game to The Arcade
 4. **Update Idea Doc (if graduating from `_ideas/`)**:
    - If this game was built from a design doc in `_ideas/`, update the status line at the top of that doc to `Status: Shipped (arcade/<game-name>/)`.
 
-5. **Verify locally** — Test the game using `npx -y serve -l 3000` or `python3 -m http.server 3000`. Complete the Definition of Done checklist below.
+5. **Verify locally & validate** — Test the game using `./scripts/serve.sh` (or `npx -y serve -l 3000` / `python3 -m http.server 3000`). Run `python3 scripts/check.py` and complete the Definition of Done checklist below.
 
 
 ## Definition of Done
 
 Before marking the task complete, verify each item:
 
+- [ ] **Repository validator passes:** Run `python3 scripts/check.py` with zero errors.
 - [ ] **Starter template copied:** Built from `.templates/arcade-game/` with clean file separation (`index.html`, `style.css`, `game.js`).
 - [ ] **Landing page card registered:** Card markup added to `arcade/index.html` and thumbnail gradient rule added to `arcade/landing.css`.
 - [ ] **Relative links verified:**
