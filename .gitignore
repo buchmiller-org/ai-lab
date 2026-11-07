@@ -1,0 +1,22 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Editor and IDE directories
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dependencies and local tooling
+node_modules/
+dist/
+
+# Python bytecode & environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Logs and runtime artifacts
+*.log
