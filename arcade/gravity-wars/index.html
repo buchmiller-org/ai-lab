@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="description" content="Gravity Wars — artillery duels bent by the gravity of multiple planets.">
+  <title>Gravity Wars — Arcade</title>
+
+  <!-- Google Fonts: Orbitron (headers) & Inter (UI) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap">
+
+  <!-- Shared Arcade Design System -->
+  <link rel="stylesheet" href="../styles.css">
+
+  <!-- Shared Favicon Snippet (change emoji as appropriate) -->
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪐</text></svg>">
+
+  <!-- Game-Specific Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Shared animated arcade background -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="orb orb--1" aria-hidden="true"></div>
+  <div class="orb orb--2" aria-hidden="true"></div>
+
+  <div class="page-wrapper">
+
+    <!-- Standard Arcade Header with Back Link -->
+    <header class="arcade-header">
+      <a href="../" class="back-link">← Back to Arcade</a>
+      <h1 class="arcade-header__title arcade-header__title--gradient">Gravity Wars</h1>
+    </header>
+
+    <!-- Main Game Area -->
+    <main class="game-container">
+      <!-- HUD -->
+      <div class="hud">
+        <div class="hud__item">
+          <span class="hud__label">ANGLE</span>
+          <span class="hud__value" id="hud-angle">--</span>
+        </div>
+        <div class="hud__item hud__item--center">
+          <span class="hud__label">SHOOTER</span>
+          <span class="hud__value" id="hud-shooter">P1</span>
+        </div>
+        <div class="hud__item">
+          <span class="hud__label">POWER</span>
+          <span class="hud__value" id="hud-power">--</span>
+        </div>
+      </div>
+
+      <!-- Canvas Container (scales responsively, 4:3) -->
+      <div class="canvas-wrap" id="canvas-wrap">
+        <canvas id="game-canvas" width="800" height="600"></canvas>
+      </div>
+      <p class="hint">Drag back from anywhere and release to fire &middot; <kbd>S</kbd> switch ship &middot; <kbd>R</kbd> new map</p>
+    </main>
+
+  </div>
+
+  <!-- Game Scripts (split into multiple files if complexity grows) -->
+  <script src="physics.js"></script>
+  <script src="entities.js"></script>
+  <script src="game.js"></script>
+
+</body>
+
+</html>
