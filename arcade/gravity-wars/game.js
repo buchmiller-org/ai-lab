@@ -1,13 +1,18 @@
 /**
- * Gravity Wars — Session 2
- * Hotseat match loop, dual aiming controls, weapons, ghost trajectory.
+ * Gravity Wars — Session 4
+ * Mode selector (Vs AI / 2-Player Local / Solo Challenges), AI turns,
+ * challenge levels with star progression, hotseat match loop, weapons,
+ * procedural Web Audio (audio.js), and neon visual FX renderer (renderer.js).
  *
- * Storage Key Convention: arcade.gravity-wars.<key> (none used yet).
+ * Storage Key Convention: arcade.gravity-wars.<key>
+ *   arcade.gravity-wars.challenges  – { "<level#>": { stars, shots } } best result per level
+ *   arcade.gravity-wars.ai-record   – { "<tier>": { w, l } } match record per AI tier
+ *   arcade.gravity-wars.muted       – boolean audio mute state
  */
 (function () {
   'use strict';
 
-  const { Physics, Entities, Weapons } = window.GW;
+  const { Physics, Entities, Weapons, AI, Challenges, Audio, Renderer } = window.GW;
   const { WORLD } = Entities;
 
   // --- Tunables ---
@@ -20,10 +25,61 @@
   const T_IMPACT = 0.9;
   const T_TURN_CHANGE = 0.5;
   const T_ROUND_OVER = 2.2;
+  const T_AI_LOCK = 0.55; // beat where the AI's chosen aim is shown before it fires
   const MAX_FLIGHT = 14; // seconds; safety net for endless orbits
 
   const STATES = ['ROUND_START', 'AIMING', 'PROJECTILE_FLIGHT', 'IMPACT_RESOLUTION', 'TURN_CHANGE', 'ROUND_OVER'];
   const COLORS = ['#06d6a0', '#f472b6'];
+
+  // --- Persistence (every access guarded: private mode / quota / corrupt JSON) ---
+  const KEY_CHALLENGES = 'arcade.gravity-wars.challenges';
+  const KEY_AI_RECORD = 'arcade.gravity-wars.ai-record';
+
+  const Store = {
+    read(key, fallback) {
+      try {
+        const raw = window.localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (e) {
+        return fallback;
+      }
+    },
+    write(key, value) {
+      try {
+        window.localStorage.setItem(key, JSON.stringify(value));
+        return true;
+      } catch (e) {
+        return false;
+      }
+    },
+  };
+
+  /** Coerce whatever was stored into a clean { "<n>": { stars, shots } } map. */
+  function loadProgress() {
+    const raw = Store.read(KEY_CHALLENGES, {});
+    const out = {};
+    if (!raw || typeof raw !== 'object') return out;
+    for (let i = 1; i <= Challenges.COUNT; i++) {
+      const r = raw[i];
+      if (r && Number.isFinite(r.stars) && r.stars >= 1) {
+        out[i] = { stars: Math.min(3, Math.floor(r.stars)), shots: Number.isFinite(r.shots) ? r.shots : 0 };
+      }
+    }
+    return out;
+  }
+
+  function loadAiRecord() {
+    const raw = Store.read(KEY_AI_RECORD, {});
+    const out = {};
+    for (const id of AI.ORDER) {
+      const r = raw && raw[id];
+      out[id] = { w: r && r.w > 0 ? Math.floor(r.w) : 0, l: r && r.l > 0 ? Math.floor(r.l) : 0 };
+    }
+    return out;
+  }
+
+  let progress = loadProgress();
+  let aiRecord = loadAiRecord();
 
   // --- DOM ---
   const $ = (id) => document.getElementById(id);
@@ -38,9 +94,28 @@
   const weaponsEl = $('weapons');
   const banner = $('banner');
   const modal = $('modal');
+  const menuEl = $('menu');
+  const gameEl = $('game-container');
+  const matchHud = $('match-hud');
+  const chalHud = $('chal-hud');
+  const aiStatus = $('ai-status');
+  const hintCard = $('hint-card');
+  const retryBtn = $('retry-btn');
+  const muteBtn = $('mute-btn');
+  const rematchBtn = $('rematch-btn');
+  const modalAltBtn = $('modal-alt-btn');
 
   // --- State ---
-  let state = 'ROUND_START';
+  let mode = 'menu'; // 'menu' | 'ai' | 'local' | 'challenge'
+  let aiTier = 'tactical';
+  let aiJob = null; // active time-sliced aiming job
+  let aiPhase = null; // 'think' | 'lock'
+  let aiTimer = 0;
+  let challenge = null; // built level state (challenge mode)
+  let drones = [];
+  let ammoLeft = 0;
+  let modalActions = { primary: null, alt: null };
+  let state = 'MENU';
   let stateTimer = 0;
   let planets = [];
   let ships = [];
@@ -54,7 +129,7 @@
     { angle: 150, power: 50, weapon: 'plasma' },
   ];
   let projectiles = [];
-  let shotTrails = []; // trails of the shot currently in flight / just finished
+  let shotTrails = []; // trails of the shot currently in flight / just finished: { points, color }
   let ghost = []; // trails of the previous shot (faint dotted)
   let effects = []; // explosions & floating text
   let flightTime = 0;
@@ -65,15 +140,26 @@
   let accumulator = 0;
 
   const aim = () => aims[turn];
+  const isAiTurn = () => mode === 'ai' && turn === 1;
+  /** True while the local human may adjust / fire. */
+  const humanAiming = () => state === 'AIMING' && !isAiTurn();
+  /** What projectiles can collide with / damage. */
+  const targets = () => (mode === 'challenge' ? drones : ships);
+  const nameOf = (i) => (mode === 'ai' ? (i === 0 ? 'YOU' : 'AI') : 'P' + (i + 1));
 
   // --- State machine ---
   function setState(next) {
+    if (state === 'PROJECTILE_FLIGHT' && next !== 'PROJECTILE_FLIGHT') {
+      Audio.stopFlightHum();
+    }
     state = next;
     stateTimer = 0;
     updateUi();
   }
 
   function startRound() {
+    Audio.stopFlightHum();
+    Renderer.resetFX();
     planets = Entities.generatePlanets(Math.floor(Math.random() * 1e9));
     ships = Entities.createShips();
     hp = [MAX_HP, MAX_HP];
@@ -84,10 +170,12 @@
     turn = roundStarter;
     roundStarter = 1 - roundStarter;
     showBanner('ROUND ' + round, COLORS[turn]);
+    Audio.blip('round');
     setState('ROUND_START');
   }
 
   function newMatch() {
+    cancelAi();
     score = [0, 0];
     round = 1;
     roundStarter = 0;
@@ -99,52 +187,224 @@
     startRound();
   }
 
+  // --- Modes ---
+  function showGame() {
+    menuEl.hidden = true;
+    gameEl.hidden = false;
+    resize(); // canvas had no layout box while hidden
+  }
+
+  function showMenu() {
+    cancelAi();
+    Audio.stopFlightHum();
+    Renderer.resetFX();
+    mode = 'menu';
+    state = 'MENU';
+    modal.hidden = true;
+    hideBanner();
+    hintCard.hidden = true;
+    gameEl.hidden = true;
+    menuEl.hidden = false;
+    buildMenu();
+    const first = menuEl.querySelector('button');
+    if (first) first.focus({ preventScroll: true });
+  }
+
+  function startVsAi(tier) {
+    Audio.blip('ui');
+    aiTier = tier;
+    mode = 'ai';
+    showGame();
+    setModeLabel('Vs AI · ' + AI.TIERS[tier].name);
+    newMatch();
+  }
+
+  function startLocal() {
+    Audio.blip('ui');
+    mode = 'local';
+    showGame();
+    setModeLabel('2-Player Local');
+    newMatch();
+  }
+
+  function setModeLabel(text) {
+    $('mode-label').textContent = text;
+    retryBtn.hidden = mode !== 'challenge';
+  }
+
+  function startChallenge(i) {
+    cancelAi();
+    Audio.stopFlightHum();
+    Renderer.resetFX();
+    mode = 'challenge';
+    showGame();
+    challenge = Challenges.build(i);
+    challenge.used = 0;
+    ammoLeft = challenge.ammo;
+    planets = challenge.planets;
+    drones = challenge.drones;
+    ships = [challenge.ship];
+    projectiles = [];
+    shotTrails = [];
+    ghost = [];
+    effects = [];
+    turn = 0;
+    flightTime = 0;
+    aims[0] = { angle: 30, power: 55, weapon: 'plasma' };
+    modal.hidden = true;
+    setModeLabel('Challenge ' + (i + 1) + ' · ' + challenge.name);
+    hintCard.textContent = challenge.hint;
+    hintCard.hidden = false;
+    showBanner(challenge.name.toUpperCase(), '#38bdf8');
+    Audio.blip('round');
+    setState('ROUND_START');
+  }
+
+  // --- AI turn driver (runs once per rendered frame, never blocks) ---
+  function cancelAi() {
+    aiJob = null;
+    aiPhase = null;
+    aiTimer = 0;
+    aiStatus.hidden = true;
+  }
+
+  function startAiTurn() {
+    aiJob = AI.createJob(aiTier, {
+      shooter: ships[1],
+      enemy: ships[0],
+      planets,
+      world: WORLD,
+      maxSpeed: MAX_SPEED,
+      maxFlight: MAX_FLIGHT,
+    });
+    aiPhase = 'think';
+    aiTimer = 0;
+    aiStatus.hidden = false;
+    updateUi();
+  }
+
+  function tickAi(dt) {
+    if (!aiJob) startAiTurn();
+    aiTimer += dt;
+    if (aiPhase === 'think') {
+      // A few virtual projections per frame under a ms budget keeps frames smooth.
+      if (!aiJob.done) aiJob.step(AI.PROJECTIONS_PER_FRAME, AI.FRAME_BUDGET_MS);
+      if (aiJob.done && aiTimer >= AI.MIN_THINK_TIME) {
+        const r = aiJob.result;
+        const a = aim();
+        a.angle = r.angle;
+        a.power = r.power;
+        a.weapon = r.weapon;
+        aiPhase = 'lock';
+        aiTimer = 0;
+        aiStatus.hidden = true;
+        Audio.blip('lock');
+        updateUi();
+      }
+    } else if (aiPhase === 'lock' && aiTimer >= T_AI_LOCK) {
+      cancelAi();
+      fire();
+    }
+  }
+
   function fire() {
     if (state !== 'AIMING') return;
     drag = null;
     const a = aim();
+    if (mode === 'challenge') {
+      ammoLeft--;
+      challenge.used++;
+      hintCard.hidden = true;
+    }
     const rad = (-a.angle * Math.PI) / 180;
     projectiles = [Weapons.launch(a.weapon, ships[turn], rad, (a.power / 100) * MAX_SPEED)];
     shotTrails = [];
     flightTime = 0;
     hideBanner();
+    Audio.launch(a.weapon, a.power);
+    Audio.startFlightHum();
     setState('PROJECTILE_FLIGHT');
   }
 
   /** Tap / Space during flight: trigger the Cluster Splitter early. */
   function trySplit() {
-    if (state !== 'PROJECTILE_FLIGHT') return;
+    if (state !== 'PROJECTILE_FLIGHT' || isAiTurn()) return;
     const extra = [];
     for (const p of projectiles) {
       if (p.type === 'cluster' && !p.split && p.alive) {
-        shotTrails.push(p.trail);
+        shotTrails.push({ points: p.trail, color: p.spec.color });
         extra.push(...Weapons.split(p));
       }
     }
-    if (extra.length) projectiles = projectiles.filter((p) => p.alive).concat(extra);
+    if (extra.length) {
+      Audio.split();
+      projectiles = projectiles.filter((p) => p.alive).concat(extra);
+    }
   }
 
   function detonate(p, hit) {
     if (hit.type === 'bounds') return;
     const spec = p.spec;
-    effects.push({ kind: 'boom', x: p.x, y: p.y, r: spec.blast || 20, t: 0, life: 0.6, color: spec.color });
-    for (let i = 0; i < ships.length; i++) {
-      const s = ships[i];
-      if (!s.alive) continue;
-      const d = Math.hypot(s.x - p.x, s.y - p.y) - s.radius;
-      let dmg = 0;
-      if (hit.type === 'ship' && hit.target === s) dmg = spec.damage;
-      else if (d < spec.blast) dmg = spec.damage * (1 - Math.max(0, d) / spec.blast);
-      dmg = Math.round(dmg);
-      if (dmg <= 0) continue;
-      hp[i] = Math.max(0, hp[i] - dmg);
-      effects.push({ kind: 'text', x: s.x, y: s.y - 24, t: 0, life: 1.2, text: '-' + dmg, color: s.color });
-      if (hp[i] <= 0) {
-        s.alive = false;
-        effects.push({ kind: 'boom', x: s.x, y: s.y, r: 70, t: 0, life: 1.0, color: s.color });
+    let majorHit = false;
+
+    if (mode === 'challenge') {
+      majorHit = detonateDrones(p, hit);
+    } else {
+      for (let i = 0; i < ships.length; i++) {
+        const s = ships[i];
+        if (!s.alive) continue;
+        const dmg = Weapons.damageFor(spec, hit, p.x, p.y, s);
+        if (dmg <= 0) continue;
+        majorHit = true;
+        hp[i] = Math.max(0, hp[i] - dmg);
+        effects.push({ kind: 'text', x: s.x, y: s.y - 24, t: 0, life: 1.2, text: '-' + dmg, color: s.color });
+        if (hp[i] <= 0) {
+          s.alive = false;
+          Renderer.spawnExplosion(effects, s.x, s.y, 72, s.color, true);
+        }
       }
     }
+
+    Renderer.spawnExplosion(effects, p.x, p.y, spec.blast || 24, spec.color, majorHit);
+    Audio.explosion(spec.blast || 24, majorHit);
     updateUi();
+  }
+
+  /** Any damaging contact destroys a drone. Returns true if at least one drone was destroyed. */
+  function detonateDrones(p, hit) {
+    let any = false;
+    for (const d of drones) {
+      if (!d.alive) continue;
+      if (Weapons.damageFor(p.spec, hit, p.x, p.y, d) <= 0) continue;
+      d.alive = false;
+      any = true;
+      Renderer.spawnExplosion(effects, d.x, d.y, 52, d.color, true);
+      effects.push({ kind: 'text', x: d.x, y: d.y - 22, t: 0, life: 1.1, text: 'DOWN', color: '#facc15' });
+    }
+    return any;
+  }
+
+  /** Compute normalized gravitational proximity [0..1] for dynamic flight hum modulation. */
+  function updateProximityHum() {
+    let maxProx = 0;
+    let nearBlackHole = false;
+    for (const pr of projectiles) {
+      if (!pr.alive) continue;
+      for (const pl of planets) {
+        if (pl.active === false || pl.shield || !(pl.mass > 0)) continue;
+        const dist = Math.hypot(pr.x - pl.x, pr.y - pl.y);
+        const surfDist = Math.max(1, dist - pl.radius);
+        const pullRange = pl.blackHole ? pl.radius * 8 : pl.radius * 3.6;
+        if (surfDist < pullRange) {
+          const prox = Math.pow(1 - surfDist / pullRange, 1.35);
+          if (prox > maxProx) {
+            maxProx = prox;
+            nearBlackHole = !!pl.blackHole;
+          }
+        }
+      }
+    }
+    Audio.updateFlightHum(maxProx, nearBlackHole);
   }
 
   function simulate() {
@@ -152,6 +412,7 @@
     stateTimer += dt;
     for (const e of effects) e.t += dt;
     effects = effects.filter((e) => e.t < e.life);
+    Renderer.stepFX(dt);
 
     switch (state) {
       case 'ROUND_START':
@@ -164,23 +425,34 @@
       case 'PROJECTILE_FLIGHT': {
         flightTime += dt;
         let spawned = [];
+        let splitHappened = false;
         for (const p of projectiles) {
           if (Weapons.shouldSplit(p)) {
-            shotTrails.push(p.trail);
+            shotTrails.push({ points: p.trail, color: p.spec.color });
             spawned.push(...Weapons.split(p));
+            splitHappened = true;
             continue;
           }
-          const hit = Weapons.step(p, planets, ships, WORLD);
+          const wasBounced = !!p.bounced;
+          const hit = Weapons.step(p, planets, targets(), WORLD);
+          if (!wasBounced && p.bounced) {
+            Audio.bounce();
+            Renderer.addShake(0.18);
+          }
           if (hit) {
             p.trail.push({ x: p.x, y: p.y });
-            shotTrails.push(p.trail);
+            shotTrails.push({ points: p.trail, color: p.spec.color });
             p.alive = false;
             detonate(p, hit);
           }
         }
+        if (splitHappened) Audio.split();
         projectiles = projectiles.filter((p) => p.alive).concat(spawned);
+        if (projectiles.length > 0) {
+          updateProximityHum();
+        }
         if (flightTime > MAX_FLIGHT) {
-          for (const p of projectiles) shotTrails.push(p.trail);
+          for (const p of projectiles) shotTrails.push({ points: p.trail, color: p.spec.color });
           projectiles = [];
         }
         if (projectiles.length === 0) {
@@ -191,7 +463,10 @@
       }
 
       case 'IMPACT_RESOLUTION':
-        if (stateTimer >= T_IMPACT) setState('TURN_CHANGE');
+        if (stateTimer >= T_IMPACT) {
+          if (mode === 'challenge') resolveChallengeShot();
+          else setState('TURN_CHANGE');
+        }
         break;
 
       case 'TURN_CHANGE':
@@ -225,24 +500,143 @@
     if (dead[0] && dead[1]) {
       roundWinner = -1;
       showBanner('DRAW — REPLAY', '#facc15');
+      Audio.blip('round');
     } else {
       roundWinner = dead[0] ? 1 : 0;
       score[roundWinner]++;
-      showBanner('P' + (roundWinner + 1) + ' WINS THE ROUND', COLORS[roundWinner]);
+      showBanner(nameOf(roundWinner) + (mode === 'ai' && roundWinner === 0 ? ' WIN THE ROUND' : ' WINS THE ROUND'), COLORS[roundWinner]);
+      Audio.fanfare(mode === 'ai' && roundWinner === 1 ? 'defeat' : 'round');
     }
     if (roundWinner === -1) round--; // a draw does not consume a round number
     setState('ROUND_OVER');
   }
 
-  function showMatchOver() {
-    const w = score[0] > score[1] ? 0 : 1;
-    $('modal-title').textContent = 'PLAYER ' + (w + 1) + ' VICTORIOUS';
-    $('modal-text').textContent = 'Final score  ' + score[0] + ' – ' + score[1];
-    modal.querySelector('.modal__card').style.setProperty('--pc', COLORS[w]);
+  /** Generic end-of-game dialog. Opts: title, text, color, stars, primary/alt {label, run}. */
+  function showModal(o) {
+    $('modal-title').textContent = o.title;
+    $('modal-text').textContent = o.text;
+    modal.querySelector('.modal__card').style.setProperty('--pc', o.color);
+    const starsEl = $('modal-stars');
+    starsEl.hidden = o.stars === undefined;
+    if (o.stars !== undefined) starsEl.innerHTML = starMarkup(o.stars, 'on', 'off');
+    rematchBtn.textContent = o.primary.label;
+    modalAltBtn.hidden = !o.alt;
+    if (o.alt) modalAltBtn.textContent = o.alt.label;
+    $('modal-menu-btn').textContent = mode === 'challenge' ? 'LEVELS' : 'MODES';
+    modalActions = { primary: o.primary.run, alt: o.alt ? o.alt.run : null };
     hideBanner();
     modal.hidden = false;
-    $('rematch-btn').focus();
+    rematchBtn.focus();
     updateUi();
+  }
+
+  function showMatchOver() {
+    const w = score[0] > score[1] ? 0 : 1;
+    let title = 'PLAYER ' + (w + 1) + ' VICTORIOUS';
+    if (mode === 'ai') {
+      title = w === 0 ? 'VICTORY' : 'AI VICTORIOUS';
+      const rec = aiRecord[aiTier];
+      if (w === 0) rec.w++;
+      else rec.l++;
+      Store.write(KEY_AI_RECORD, aiRecord);
+    }
+    Audio.fanfare(mode === 'ai' && w === 1 ? 'defeat' : 'victory');
+    const extra = mode === 'ai' ? '  ·  ' + AI.TIERS[aiTier].name + ' record ' + aiRecord[aiTier].w + 'W–' + aiRecord[aiTier].l + 'L' : '';
+    showModal({
+      title,
+      text: 'Final score  ' + score[0] + ' – ' + score[1] + extra,
+      color: COLORS[w],
+      primary: { label: 'PLAY AGAIN', run: newMatch },
+    });
+  }
+
+  // --- Challenge flow ---
+  const starMarkup = (n, on, off) =>
+    [1, 2, 3].map((i) => '<span class="' + (i <= n ? on : off) + '">★</span>').join('');
+
+  function resolveChallengeShot() {
+    if (drones.every((d) => !d.alive)) return finishChallenge(true);
+    if (ammoLeft <= 0) return finishChallenge(false);
+    setState('AIMING');
+  }
+
+  function finishChallenge(won) {
+    const i = challenge.index;
+    state = 'CHALLENGE_END';
+    if (!won) {
+      Audio.fanfare('defeat');
+      const left = drones.filter((d) => d.alive).length;
+      showModal({
+        title: 'OUT OF AMMO',
+        text: left + (left === 1 ? ' drone' : ' drones') + ' still active.',
+        color: '#f87171',
+        stars: 0,
+        primary: { label: 'RETRY', run: () => startChallenge(i) },
+      });
+      return;
+    }
+    Audio.fanfare('victory');
+    const stars = Challenges.starsFor(i, challenge.used);
+    const prev = progress[i + 1];
+    const best = {
+      stars: prev ? Math.max(prev.stars, stars) : stars,
+      shots: prev && prev.stars >= stars && prev.shots > 0 ? Math.min(prev.shots, challenge.used) : challenge.used,
+    };
+    progress[i + 1] = best;
+    Store.write(KEY_CHALLENGES, progress);
+    const hasNext = i + 1 < Challenges.COUNT;
+    const prevNote = prev && prev.stars > stars ? '  ·  Best ' + prev.stars + '★' : '';
+    showModal({
+      title: 'LEVEL CLEARED',
+      text: 'Used ' + challenge.used + ' of ' + challenge.ammo + ' shots' + prevNote + (hasNext ? '' : '  ·  Final level complete!'),
+      color: '#facc15',
+      stars,
+      primary: hasNext ? { label: 'NEXT LEVEL', run: () => startChallenge(i + 1) } : { label: 'LEVELS', run: showMenu },
+      alt: { label: 'RETRY', run: () => startChallenge(i) },
+    });
+  }
+
+  function totalStars() {
+    let n = 0;
+    for (let i = 1; i <= Challenges.COUNT; i++) if (progress[i]) n += progress[i].stars;
+    return n;
+  }
+
+  // --- Mode selector UI ---
+  function buildMenu() {
+    const aiBox = $('menu-ai');
+    aiBox.innerHTML = '';
+    for (const id of AI.ORDER) {
+      const t = AI.TIERS[id];
+      const r = aiRecord[id];
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'menu-btn';
+      b.id = 'menu-ai-' + id;
+      b.innerHTML = t.name + '<small>' + t.blurb + (r.w + r.l ? '<br>Record ' + r.w + 'W–' + r.l + 'L' : '') + '</small>';
+      b.addEventListener('click', () => startVsAi(id));
+      aiBox.appendChild(b);
+    }
+
+    const grid = $('level-grid');
+    grid.innerHTML = '';
+    for (let i = 0; i < Challenges.COUNT; i++) {
+      const def = Challenges.LEVELS[i];
+      const pr = progress[i + 1];
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'level-tile' + (pr ? ' is-cleared' : '');
+      b.id = 'level-tile-' + (i + 1);
+      b.setAttribute('aria-label', 'Level ' + (i + 1) + ' ' + def.name + ', ' + (pr ? pr.stars : 0) + ' of 3 stars');
+      b.innerHTML =
+        '<span class="level-tile__num">LEVEL ' + (i + 1) + '</span>' +
+        '<span class="level-tile__name">' + def.name + '</span>' +
+        '<span class="level-tile__meta"><span class="stars" aria-hidden="true">' + starMarkup(pr ? pr.stars : 0, 'on', 'off') + '</span>' +
+        '<span>' + (pr ? 'Best ' + pr.shots + (pr.shots === 1 ? ' shot' : ' shots') : def.ammo + ' shots') + '</span></span>';
+      b.addEventListener('click', () => startChallenge(i));
+      grid.appendChild(b);
+    }
+    $('menu-star-total').textContent = '★ ' + totalStars() + ' / ' + Challenges.COUNT * 3;
   }
 
   // --- Banner ---
@@ -256,6 +650,15 @@
   }
 
   // --- UI sync ---
+  function syncMuteUi() {
+    if (!muteBtn) return;
+    const isMuted = Audio.isMuted();
+    muteBtn.classList.toggle('is-muted', isMuted);
+    muteBtn.setAttribute('aria-pressed', isMuted ? 'true' : 'false');
+    muteBtn.setAttribute('aria-label', isMuted ? 'Unmute audio' : 'Mute audio');
+    muteBtn.textContent = isMuted ? '🔇 MUTE' : '🔊 SFX';
+  }
+
   function buildWeaponButtons() {
     Weapons.ORDER.forEach((id) => {
       const spec = Weapons.TYPES[id];
@@ -267,8 +670,9 @@
       b.style.setProperty('--wc', spec.color);
       b.innerHTML = spec.name + '<small>' + spec.desc.split(',')[0].split(':')[0] + '</small>';
       b.addEventListener('click', () => {
-        if (state !== 'AIMING') return;
+        if (!humanAiming()) return;
         aim().weapon = id;
+        Audio.blip('weapon');
         updateUi();
         b.blur();
       });
@@ -277,15 +681,29 @@
   }
 
   function updateUi() {
-    for (let i = 0; i < 2; i++) {
-      $('hp-p' + (i + 1)).style.width = (hp[i] / MAX_HP) * 100 + '%';
-      $('hp-text-p' + (i + 1)).textContent = hp[i];
-      $('score-p' + (i + 1)).textContent = score[i];
-      $('hud-p' + (i + 1)).classList.toggle('is-active', i === turn && state !== 'MATCH_OVER');
+    syncMuteUi();
+    const chal = mode === 'challenge';
+    matchHud.hidden = chal;
+    chalHud.hidden = !chal;
+    if (chal) {
+      $('chal-level').textContent = 'LEVEL ' + (challenge.index + 1);
+      $('chal-name').textContent = challenge.name;
+      $('chal-targets').textContent = drones.filter((d) => d.alive).length + '/' + drones.length;
+      let pips = '';
+      for (let i = 0; i < challenge.ammo; i++) pips += '<span class="pip' + (i < ammoLeft ? '' : ' is-spent') + '"></span>';
+      $('chal-ammo').innerHTML = pips;
+    } else {
+      for (let i = 0; i < 2; i++) {
+        $('hp-p' + (i + 1)).style.width = (hp[i] / MAX_HP) * 100 + '%';
+        $('hp-text-p' + (i + 1)).textContent = hp[i];
+        $('score-p' + (i + 1)).textContent = score[i];
+        $('hud-p' + (i + 1)).classList.toggle('is-active', i === turn && state !== 'MATCH_OVER');
+        $('hud-p' + (i + 1)).querySelector('.hud__name').textContent = nameOf(i);
+      }
+      $('hud-round').textContent = 'ROUND ' + round;
+      $('hud-turn').textContent = nameOf(turn);
+      $('hud-turn').style.color = COLORS[turn];
     }
-    $('hud-round').textContent = 'ROUND ' + round;
-    $('hud-turn').textContent = 'P' + (turn + 1);
-    $('hud-turn').style.color = COLORS[turn];
 
     const a = aim();
     angleRange.value = a.angle;
@@ -297,8 +715,8 @@
       b.classList.toggle('is-selected', b.dataset.weapon === a.weapon);
     });
 
-    const aiming = state === 'AIMING';
-    const canSplit = state === 'PROJECTILE_FLIGHT' && projectiles.some((p) => p.type === 'cluster' && !p.split);
+    const aiming = humanAiming();
+    const canSplit = !isAiTurn() && state === 'PROJECTILE_FLIGHT' && projectiles.some((p) => p.type === 'cluster' && !p.split);
     controls.classList.toggle('is-locked', !aiming);
     fireBtn.disabled = !aiming && !canSplit;
     fireBtn.textContent = canSplit ? 'SPLIT' : 'FIRE';
@@ -306,10 +724,12 @@
 
   function setAngle(v) {
     aim().angle = ((Math.round(v) % 360) + 360) % 360;
+    Audio.aimSweep(aim().power, aim().angle);
     updateUi();
   }
   function setPower(v) {
     aim().power = Math.max(1, Math.min(100, Math.round(v)));
+    Audio.aimSweep(aim().power, aim().angle);
     updateUi();
   }
 
@@ -340,213 +760,46 @@
     if (len < 2) return;
     aim().angle = ((Math.round((-Math.atan2(dy, dx) * 180) / Math.PI) % 360) + 360) % 360;
     aim().power = Math.max(1, Math.min(100, Math.round((len / MAX_DRAG) * 100)));
+    Audio.aimSweep(aim().power, aim().angle);
     updateUi();
   }
 
-  // --- Rendering ---
+  // --- Rendering (delegated to GW.Renderer) ---
   function render() {
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = '#070a13';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.setTransform(scale, 0, 0, scale, 0, 0);
-
-    drawStars();
-    planets.forEach(drawPlanet);
-    drawGhost();
-    ships.forEach(drawShip);
-
-    shotTrails.forEach((t) => drawTrail(t, 0.8));
-    for (const p of projectiles) {
-      drawTrail(p.trail, 1);
-      drawProjectile(p);
-    }
-    effects.forEach(drawEffect);
-    if (state === 'AIMING') drawAim();
-  }
-
-  const stars = (function () {
-    const rand = Entities.createRng(99);
-    const arr = [];
-    for (let i = 0; i < 90; i++) arr.push({ x: rand() * WORLD.width, y: rand() * WORLD.height, r: rand() * 1.2 + 0.2, a: rand() * 0.5 + 0.15 });
-    return arr;
-  })();
-
-  function drawStars() {
-    for (const s of stars) {
-      ctx.fillStyle = 'rgba(255,255,255,' + s.a + ')';
-      ctx.fillRect(s.x, s.y, s.r, s.r);
-    }
-  }
-
-  function drawPlanet(p) {
-    const halo = ctx.createRadialGradient(p.x, p.y, p.radius, p.x, p.y, p.radius * 2.6);
-    halo.addColorStop(0, p.color + '55');
-    halo.addColorStop(1, p.color + '00');
-    ctx.fillStyle = halo;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.radius * 2.6, 0, Math.PI * 2);
-    ctx.fill();
-
-    const body = ctx.createRadialGradient(p.x - p.radius * 0.35, p.y - p.radius * 0.35, p.radius * 0.1, p.x, p.y, p.radius);
-    body.addColorStop(0, '#ffffff');
-    body.addColorStop(0.25, p.color);
-    body.addColorStop(1, '#0a0e1a');
-    ctx.fillStyle = body;
-    ctx.shadowColor = p.color;
-    ctx.shadowBlur = 18;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  }
-
-  function drawShip(s) {
-    if (!s.alive) return;
-    ctx.save();
-    ctx.translate(s.x, s.y);
-    ctx.scale(s.facing, 1);
-    ctx.shadowColor = s.color;
-    ctx.shadowBlur = 14;
-    ctx.fillStyle = s.color;
-    ctx.beginPath();
-    ctx.moveTo(s.radius, 0);
-    ctx.lineTo(-s.radius * 0.8, -s.radius * 0.8);
-    ctx.lineTo(-s.radius * 0.4, 0);
-    ctx.lineTo(-s.radius * 0.8, s.radius * 0.8);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-    ctx.shadowBlur = 0;
-    if (ships[turn] === s && (state === 'AIMING' || state === 'ROUND_START')) {
-      ctx.strokeStyle = s.color + '88';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.radius + 8, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-  }
-
-  /** Faint dotted trail of the previous shot. */
-  function drawGhost() {
-    if (!ghost.length) return;
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    for (const trail of ghost) {
-      for (let i = 0; i < trail.length; i += 3) {
-        ctx.beginPath();
-        ctx.arc(trail[i].x, trail[i].y, 1.4, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-  }
-
-  function drawTrail(trail, alpha) {
-    if (trail.length < 2) return;
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    const n = trail.length;
-    const seg = Math.max(1, Math.floor(n / 40));
-    for (let i = 0; i < n - 1; i += seg) {
-      const j = Math.min(i + seg, n - 1);
-      ctx.strokeStyle = 'rgba(250, 204, 21,' + (alpha * (0.15 + 0.85 * (j / n))).toFixed(3) + ')';
-      ctx.beginPath();
-      ctx.moveTo(trail[i].x, trail[i].y);
-      for (let k = i + 1; k <= j; k++) ctx.lineTo(trail[k].x, trail[k].y);
-      ctx.stroke();
-    }
-  }
-
-  function drawProjectile(p) {
-    ctx.fillStyle = '#fff';
-    ctx.shadowColor = p.spec.color;
-    ctx.shadowBlur = 14;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    if (p.type === 'bouncer' && p.bouncesLeft > 0) {
-      // Elastic warp shield
-      ctx.strokeStyle = p.spec.color;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius + 5, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    if (p.type === 'cluster') {
-      const k = Math.min(p.age / Weapons.SPLIT_DELAY, 1);
-      ctx.strokeStyle = p.spec.color;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius + 4, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2);
-      ctx.stroke();
-    }
-  }
-
-  function drawEffect(e) {
-    const k = e.t / e.life;
-    if (e.kind === 'boom') {
-      ctx.fillStyle = e.color + Math.round((1 - k) * 90).toString(16).padStart(2, '0');
-      ctx.strokeStyle = e.color;
-      ctx.globalAlpha = 1 - k;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(e.x, e.y, 4 + e.r * Math.min(1, k * 2.2), 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    } else {
-      ctx.globalAlpha = 1 - k;
-      ctx.fillStyle = e.color;
-      ctx.font = '700 18px Orbitron, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(e.text, e.x, e.y - k * 24);
-      ctx.globalAlpha = 1;
-    }
-  }
-
-  function drawAim() {
-    const s = ships[turn];
-    const a = aim();
-    const rad = (-a.angle * Math.PI) / 180;
-    const len = (a.power / 100) * MAX_DRAG;
-    // Direction/power indicator from the ship
-    ctx.strokeStyle = s.color;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([6, 5]);
-    ctx.beginPath();
-    ctx.moveTo(s.x, s.y);
-    ctx.lineTo(s.x + Math.cos(rad) * len, s.y + Math.sin(rad) * len);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = s.color;
-    ctx.beginPath();
-    ctx.arc(s.x + Math.cos(rad) * len, s.y + Math.sin(rad) * len, 4, 0, Math.PI * 2);
-    ctx.fill();
-    // Slingshot pull-back line while dragging
-    if (drag) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(s.x, s.y);
-      ctx.lineTo(drag.px, drag.py);
-      ctx.stroke();
-      ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.arc(drag.px, drag.py, 5, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    Renderer.renderScene(ctx, canvas, scale, {
+      mode,
+      state,
+      turn,
+      challenge,
+      planets,
+      drones,
+      ships,
+      ghost,
+      shotTrails,
+      projectiles,
+      effects,
+      aim: aim(),
+      drag,
+      showAim: state === 'AIMING' && !(isAiTurn() && aiPhase !== 'lock'),
+    });
   }
 
   // --- Main loop (fixed time-step with accumulator => deterministic) ---
   function loop(ts) {
     if (!lastTime) lastTime = ts;
-    accumulator += Math.min((ts - lastTime) / 1000, 0.1);
+    const frameDt = Math.min((ts - lastTime) / 1000, 0.1);
+    accumulator += frameDt;
     lastTime = ts;
+    if (mode === 'menu') {
+      accumulator = 0;
+      requestAnimationFrame(loop);
+      return;
+    }
     while (accumulator >= Physics.FRAME_DT) {
       simulate();
       accumulator -= Physics.FRAME_DT;
     }
+    if (state === 'AIMING' && isAiTurn()) tickAi(frameDt);
     updateFireLabel();
     render();
     requestAnimationFrame(loop);
@@ -571,7 +824,7 @@
         trySplit();
         return;
       }
-      if (state !== 'AIMING') return;
+      if (!humanAiming()) return;
       canvas.setPointerCapture(e.pointerId);
       const w = toWorld(e);
       drag = { px: w.x, py: w.y, len: 0 };
@@ -588,53 +841,90 @@
       if (!drag) return;
       const pulled = drag.len;
       drag = null;
-      if (pulled >= MIN_DRAG) fire();
+      if (pulled >= MIN_DRAG && humanAiming()) fire();
     });
     canvas.addEventListener('pointercancel', () => {
       drag = null;
     });
 
-    angleRange.addEventListener('input', () => state === 'AIMING' && setAngle(+angleRange.value));
-    powerRange.addEventListener('input', () => state === 'AIMING' && setPower(+powerRange.value));
+    angleRange.addEventListener('input', () => humanAiming() && setAngle(+angleRange.value));
+    powerRange.addEventListener('input', () => humanAiming() && setPower(+powerRange.value));
     document.querySelectorAll('.step-btn').forEach((b) => {
       b.addEventListener('click', () => {
-        if (state !== 'AIMING') return;
+        if (!humanAiming()) return;
         const d = +b.dataset.delta;
         if (b.dataset.step === 'angle') setAngle(aim().angle + d);
         else setPower(aim().power + d);
       });
     });
     fireBtn.addEventListener('click', () => {
-      if (state === 'AIMING') fire();
+      if (humanAiming()) fire();
       else trySplit();
       fireBtn.blur();
     });
-    $('rematch-btn').addEventListener('click', newMatch);
+
+    if (muteBtn) {
+      muteBtn.addEventListener('click', () => {
+        Audio.toggleMute();
+        syncMuteUi();
+        muteBtn.blur();
+      });
+    }
+
+    // Modal + mode navigation
+    rematchBtn.addEventListener('click', () => {
+      Audio.blip('ui');
+      if (modalActions.primary) modalActions.primary();
+    });
+    modalAltBtn.addEventListener('click', () => {
+      Audio.blip('ui');
+      if (modalActions.alt) modalActions.alt();
+    });
+    $('modal-menu-btn').addEventListener('click', () => {
+      Audio.blip('ui');
+      showMenu();
+    });
+    $('menu-btn').addEventListener('click', () => {
+      Audio.blip('ui');
+      showMenu();
+    });
+    retryBtn.addEventListener('click', () => {
+      if (mode === 'challenge') {
+        Audio.blip('ui');
+        startChallenge(challenge.index);
+      }
+    });
+    $('menu-local').addEventListener('click', startLocal);
 
     window.addEventListener('keydown', (e) => {
-      if (!modal.hidden) return;
+      if (e.code === 'KeyM' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        Audio.toggleMute();
+        syncMuteUi();
+        return;
+      }
+      if (!modal.hidden || mode === 'menu') return;
       const step = e.shiftKey ? 5 : 1;
       switch (e.code) {
         case 'ArrowLeft':
           e.preventDefault();
-          if (state === 'AIMING') setAngle(aim().angle + step); // CCW
+          if (humanAiming()) setAngle(aim().angle + step); // CCW
           break;
         case 'ArrowRight':
           e.preventDefault();
-          if (state === 'AIMING') setAngle(aim().angle - step);
+          if (humanAiming()) setAngle(aim().angle - step);
           break;
         case 'ArrowUp':
           e.preventDefault();
-          if (state === 'AIMING') setPower(aim().power + step);
+          if (humanAiming()) setPower(aim().power + step);
           break;
         case 'ArrowDown':
           e.preventDefault();
-          if (state === 'AIMING') setPower(aim().power - step);
+          if (humanAiming()) setPower(aim().power - step);
           break;
         case 'Space':
           e.preventDefault();
           if (e.repeat) break;
-          if (state === 'AIMING') fire();
+          if (humanAiming()) fire();
           else trySplit();
           break;
         default:
@@ -645,9 +935,9 @@
 
   function init() {
     buildWeaponButtons();
+    syncMuteUi();
     bindEvents();
-    resize();
-    newMatch();
+    showMenu();
     requestAnimationFrame(loop);
   }
 

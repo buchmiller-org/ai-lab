@@ -37,7 +37,7 @@
     let ay = 0;
     for (let i = 0; i < bodies.length; i++) {
       const b = bodies[i];
-      if (b.active === false) continue;
+      if (b.active === false || b.mass === 0) continue; // massless bodies (shield pylons) are solid but exert no pull
       const dx = b.x - x;
       const dy = b.y - y;
       const r2 = dx * dx + dy * dy;

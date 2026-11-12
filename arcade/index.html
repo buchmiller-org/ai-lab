@@ -334,17 +334,39 @@
         <!-- Gravity Wars -->
         <a href="gravity-wars/" class="game-card" id="card-gravity-wars">
           <div class="game-card__thumb game-card__thumb--gravity-wars">
-            <svg viewBox="0 0 200 150" width="100%" height="100%" aria-hidden="true">
-              <circle cx="100" cy="75" r="22" fill="#a78bfa" opacity="0.85" />
-              <circle cx="100" cy="75" r="40" fill="none" stroke="#a78bfa" stroke-opacity="0.3" />
-              <path d="M20 100 Q80 -10 180 100" fill="none" stroke="#facc15" stroke-width="2" stroke-dasharray="4 5" />
-              <circle cx="20" cy="100" r="6" fill="#06d6a0" />
-              <circle cx="180" cy="100" r="6" fill="#f472b6" />
+            <svg class="gw-thumb-svg" viewBox="0 0 240 160" width="100%" height="100%" aria-hidden="true">
+              <defs>
+                <radialGradient id="gw-planet-violet" cx="35%" cy="35%" r="65%">
+                  <stop offset="0%" stop-color="#f3e8ff" />
+                  <stop offset="40%" stop-color="#a78bfa" />
+                  <stop offset="100%" stop-color="#2e1065" />
+                </radialGradient>
+                <radialGradient id="gw-planet-cyan" cx="35%" cy="35%" r="65%">
+                  <stop offset="0%" stop-color="#e0f2fe" />
+                  <stop offset="40%" stop-color="#38bdf8" />
+                  <stop offset="100%" stop-color="#0c4a6e" />
+                </radialGradient>
+              </defs>
+              <!-- Equipotential gravity well contour rings -->
+              <circle class="gw-well-ring" cx="95" cy="65" r="46" fill="none" stroke="#a78bfa" stroke-opacity="0.18" stroke-dasharray="5 4" />
+              <circle class="gw-well-ring" cx="95" cy="65" r="33" fill="none" stroke="#a78bfa" stroke-opacity="0.32" />
+              <circle class="gw-well-ring" cx="158" cy="105" r="36" fill="none" stroke="#38bdf8" stroke-opacity="0.2" stroke-dasharray="4 4" />
+              <circle class="gw-well-ring" cx="158" cy="105" r="24" fill="none" stroke="#38bdf8" stroke-opacity="0.35" />
+              <!-- Planets -->
+              <circle class="gw-planet" cx="95" cy="65" r="20" fill="url(#gw-planet-violet)" />
+              <circle class="gw-planet" cx="158" cy="105" r="14" fill="url(#gw-planet-cyan)" />
+              <!-- Glowing curved orbital slingshot trajectory -->
+              <path class="gw-orbit-glow" d="M 28 112 C 58 18, 128 18, 134 86 S 184 142, 212 54" fill="none" stroke="#facc15" stroke-width="5" stroke-opacity="0.28" stroke-linecap="round" />
+              <path class="gw-orbit-line" d="M 28 112 C 58 18, 128 18, 134 86 S 184 142, 212 54" fill="none" stroke="#facc15" stroke-width="2.2" stroke-dasharray="5 5" stroke-linecap="round" />
+              <!-- Ships & projectile -->
+              <polygon points="34,112 22,106 25,112 22,118" fill="#06d6a0" />
+              <polygon points="206,54 218,48 215,54 218,60" fill="#f472b6" />
+              <circle class="gw-shot" cx="131" cy="72" r="3.5" fill="#ffffff" stroke="#facc15" stroke-width="2" />
             </svg>
           </div>
           <div class="game-card__body">
             <h2 class="game-card__title">Gravity Wars</h2>
-            <p class="game-card__desc">Fire shots that curve through planetary gravity wells.</p>
+            <p class="game-card__desc">Slingshot artillery ordnance around planetary gravity wells and black holes in solo challenges or AI duels.</p>
             <span class="game-card__cta">Play <span class="game-card__cta-arrow">→</span></span>
           </div>
         </a>
@@ -435,12 +457,12 @@
                 level.</p>
             </div>
           </li>
-          <li class="idea-item">
+          <li class="idea-item idea-item--shipped">
             <div class="idea-item__bullet"></div>
             <div class="idea-item__text">
-              <h3 class="idea-item__title">Gravity Wars</h3>
+              <h3 class="idea-item__title">Gravity Wars <a href="gravity-wars/" class="idea-item__badge">Now Playable →</a></h3>
               <p class="idea-item__desc">Aim and fire projectiles across planetary gravity fields in this artillery
-                strategy game.</p>
+                strategy game — now live in The Arcade with AI opponents and orbital challenges.</p>
             </div>
           </li>
 

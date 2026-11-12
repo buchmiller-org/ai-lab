@@ -1582,6 +1582,67 @@
     height: 150px;
   }
 }
+/* Gravity Wars Thumbnail & Shipped Idea Badge */
 .game-card__thumb--gravity-wars {
-  background: radial-gradient(circle at 50% 50%, #2e1065 0%, #1a103c 55%, #0f172a 100%);
+  background:
+    radial-gradient(circle at 38% 42%, rgba(167, 139, 250, 0.25) 0%, transparent 45%),
+    radial-gradient(circle at 66% 68%, rgba(56, 189, 248, 0.2) 0%, transparent 42%),
+    linear-gradient(155deg, #160c2e 0%, #0d152a 55%, #070a14 100%);
 }
+
+.gw-thumb-svg {
+  filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.35));
+}
+
+.gw-orbit-line {
+  animation: gwOrbitFlow 2.6s linear infinite;
+}
+
+.gw-well-ring {
+  transform-origin: center;
+  animation: gwWellPulse 3.6s ease-in-out infinite alternate;
+}
+
+.gw-shot {
+  filter: drop-shadow(0 0 6px #facc15);
+}
+
+@keyframes gwOrbitFlow {
+  from { stroke-dashoffset: 20; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes gwWellPulse {
+  0% { opacity: 0.55; }
+  100% { opacity: 1; }
+}
+
+.idea-item--shipped {
+  border-color: rgba(6, 214, 160, 0.28);
+  background: rgba(6, 214, 160, 0.05);
+}
+
+.idea-item__badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #06d6a0;
+  background: rgba(6, 214, 160, 0.14);
+  border: 1px solid rgba(6, 214, 160, 0.45);
+  box-shadow: 0 0 12px rgba(6, 214, 160, 0.25);
+  vertical-align: middle;
+  transition: background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.idea-item__badge:hover {
+  background: rgba(6, 214, 160, 0.26);
+  box-shadow: 0 0 18px rgba(6, 214, 160, 0.5);
+}
+

@@ -103,5 +103,17 @@
     return hit;
   }
 
-  GW.Weapons = { TYPES, ORDER, SPLIT_DELAY, launch, shouldSplit, split, step };
+  /**
+   * Damage a detonation at (x, y) deals to one ship: full damage on a direct
+   * hit, otherwise linear splash falloff inside the blast radius.
+   * Shared by the game loop and the AI solver so both always agree.
+   */
+  function damageFor(spec, hit, x, y, ship) {
+    if (hit.type === 'ship' && hit.target === ship) return Math.round(spec.damage);
+    const d = Math.hypot(ship.x - x, ship.y - y) - ship.radius;
+    if (d < spec.blast) return Math.round(spec.damage * (1 - Math.max(0, d) / spec.blast));
+    return 0;
+  }
+
+  GW.Weapons = { TYPES, ORDER, SPLIT_DELAY, launch, shouldSplit, split, step, damageFor };
 })();
