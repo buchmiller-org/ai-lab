@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Cyber Pong — Arcade</title>
   <meta name="description" content="High-speed, physics-based paddle action with explosive power-ups and neon visuals.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,42 +28,121 @@
     <header class="arcade-header">
       <a href="../" class="back-link">← Back to Arcade</a>
       <h1 class="arcade-header__title arcade-header__title--gradient title-cp">Cyber Pong</h1>
+      <div class="arcade-header__right">
+        <button type="button" class="mini-btn mute-btn" id="mute-btn" aria-pressed="false" aria-label="Mute audio">🔊 SFX</button>
+      </div>
     </header>
 
-    <main class="game-container">
-      <div class="score-board">
-        <div class="score" id="score-player">0</div>
-        <div class="score-divider">:</div>
-        <div class="score" id="score-ai">0</div>
-      </div>
-
-      <!-- Start screen -->
-      <div id="start-screen" class="overlay">
-        <h2>Ready?</h2>
-        <p>Use W/S or Up/Down arrows to move your paddle.</p>
-        <div class="difficulty-options">
-          <button class="diff-btn" data-diff="easy">Easy</button>
-          <button class="diff-btn active" data-diff="normal">Normal</button>
-          <button class="diff-btn" data-diff="hard">Hard</button>
+    <!-- Mode Selection Menu -->
+    <section class="menu" id="menu" aria-label="Game mode selection">
+      <div class="ruleset-bar">
+        <span class="ruleset-bar__label">Ruleset</span>
+        <div class="ruleset-switch" role="group" aria-label="Ruleset">
+          <button type="button" class="ruleset-btn is-active" data-ruleset="arcade">⚡ Arcade Chaos</button>
+          <button type="button" class="ruleset-btn" data-ruleset="classic">🏓 Classic Purist</button>
         </div>
-        <button id="start-btn" class="btn" style="margin-top: 15px;">Start Game</button>
+        <p class="ruleset-bar__desc" id="ruleset-desc">Mid-court neon anomalies: Overcharge Smash, Nano Expand, Split Multiball, Laser Barrier &amp; Phase Warp.</p>
       </div>
 
-      <!-- Game over screen -->
-      <div id="game-over-screen" class="overlay hidden">
-        <h2 id="winner-text">You Win!</h2>
-        <div class="difficulty-options">
-          <button class="diff-btn" data-diff="easy">Easy</button>
-          <button class="diff-btn active" data-diff="normal">Normal</button>
-          <button class="diff-btn" data-diff="hard">Hard</button>
+      <div class="menu__grid">
+        <div class="menu-card menu-card--ai">
+          <h2 class="menu-card__title">Vs AI</h2>
+          <p class="menu-card__desc">First to 5 points. Pick your cyber opponent.</p>
+          <div class="menu-card__actions" id="menu-ai"></div>
         </div>
-        <button id="restart-btn" class="btn" style="margin-top: 15px;">Play Again</button>
+
+        <div class="menu-card menu-card--local">
+          <h2 class="menu-card__title">2-Player Local</h2>
+          <p class="menu-card__desc">Dual touch zones on mobile/tablet or split keyboard controls on desktop.</p>
+          <div class="menu-card__actions">
+            <button type="button" class="menu-btn" id="menu-local">
+              Start Duel
+              <small>Touch Zones + W/S &amp; ↑/↓</small>
+            </button>
+          </div>
+        </div>
       </div>
 
-      <canvas id="gameCanvas" width="800" height="500"></canvas>
+      <div class="stats-bar" id="stats-bar" aria-label="Career statistics">
+        <div class="stats-bar__item">
+          <span class="stats-bar__label">Best Streak</span>
+          <span class="stats-bar__value" id="stat-streak">0</span>
+        </div>
+        <div class="stats-bar__item">
+          <span class="stats-bar__label">Longest Rally</span>
+          <span class="stats-bar__value" id="stat-rally">0</span>
+        </div>
+        <div class="stats-bar__item">
+          <span class="stats-bar__label">Peak Speed</span>
+          <span class="stats-bar__value" id="stat-speed">0 px/s</span>
+        </div>
+        <div class="stats-bar__item">
+          <span class="stats-bar__label">AI Victories</span>
+          <span class="stats-bar__value" id="stat-wins">0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Game Area -->
+    <main class="game-container" id="game-container" hidden>
+      <div class="mode-bar">
+        <button type="button" class="mini-btn" id="menu-btn">☰ Modes</button>
+        <span class="mode-bar__label" id="mode-label"></span>
+        <button type="button" class="mini-btn" id="ruleset-btn" title="Toggle Arcade Chaos / Classic Purist">⚡ Arcade</button>
+        <button type="button" class="mini-btn" id="restart-top-btn">↻ Restart</button>
+      </div>
+
+      <div class="hud" id="match-hud">
+        <div class="hud__player hud__player--p1" id="hud-p1">
+          <div class="hud__row">
+            <span class="hud__name" id="name-p1">P1</span>
+            <span class="hud__score" id="score-player">0</span>
+          </div>
+          <div class="hud__status" id="status-p1">READY</div>
+        </div>
+
+        <div class="hud__center">
+          <span class="hud__label" id="hud-ruleset">ARCADE</span>
+          <span class="hud__value" id="hud-rally">FIRST TO 5</span>
+        </div>
+
+        <div class="hud__player hud__player--p2" id="hud-p2">
+          <div class="hud__row">
+            <span class="hud__score" id="score-ai">0</span>
+            <span class="hud__name" id="name-p2">AI</span>
+          </div>
+          <div class="hud__status" id="status-p2">READY</div>
+        </div>
+      </div>
+
+      <div class="canvas-wrap" id="canvas-wrap">
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
+        <div class="banner" id="banner" hidden></div>
+      </div>
+
+      <p class="hint" id="controls-hint">
+        Move mouse or drag to steer paddle · <kbd>W</kbd>/<kbd>S</kbd> or <kbd>↑</kbd>/<kbd>↓</kbd> · <kbd>M</kbd> mute
+      </p>
     </main>
+
+    <!-- Match-over modal -->
+    <div class="modal" id="modal" hidden>
+      <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <h2 class="modal__title" id="modal-title">VICTORY</h2>
+        <p class="modal__text" id="modal-text"></p>
+        <div class="modal__actions">
+          <button type="button" class="btn" id="rematch-btn">PLAY AGAIN</button>
+          <button type="button" class="btn btn--ghost" id="modal-menu-btn">MODES</button>
+        </div>
+      </div>
+    </div>
   </div>
 
+  <script src="physics.js"></script>
+  <script src="powerups.js"></script>
+  <script src="ai.js"></script>
+  <script src="audio.js"></script>
+  <script src="renderer.js"></script>
   <script src="game.js"></script>
 </body>
 

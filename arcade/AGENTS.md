@@ -140,3 +140,10 @@ When promoting an experimental prototype from `sandbox/` to `arcade/`:
 4. Register the new game card in `arcade/index.html` and thumbnail gradient in `arcade/landing.css`.
 5. If the game originated from a document in `_ideas/`, update its top status line to `Status: Shipped (arcade/<game-name>/)`. The idea doc stays in `_ideas/` as the canonical design record.
 
+---
+
+## Quality Benchmark & Upgrade Roadmap
+
+- **Reference Benchmark:** [`gravity-wars/`](gravity-wars/) sets the standard for Arcade polish (modular `window.<NS>` IIFEs, fixed-timestep physics, 3-mode menu/in-game switcher with 3-tier AI and star-rated challenges, zero-dependency Web Audio + Mute toggle, HiDPI VFX canvas, guarded `localStorage` persistence, and inline `<svg>` card artwork).
+- **Portfolio Upgrade Plan:** See [`_ideas/arcade-quality-roadmap.md`](../_ideas/arcade-quality-roadmap.md) for the per-game audit, bug triage, priority tiers, and session checklists across all other arcade games.
+
